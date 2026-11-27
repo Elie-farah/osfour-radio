@@ -429,18 +429,20 @@ function setPower(on){
   $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
   $("onair").classList.toggle("on",playing); $("onairTxt").textContent=playing?"On air":"Off air";
 }
-/* Until Osfour's own MP3s are added, the old radio plays a Fairuz piano set through YouTube's official player. */
-const YT_VIDEO="ZHiw3HXVPFE";
+/* Until Osfour's own MP3s are added, the old radio plays Umm Kulthum and a Fairuz piano album, one after the other, through YouTube's official player. */
+const YT_LIST=["JcrDpYQ1bZY","ZHiw3HXVPFE"];   // Umm Kulthum first, then the Fairuz piano album, then again
+let ytIdx=0;
 const yt=(()=>{ let player=null, ready=false, want=false;
   const box=document.createElement("div"); box.id="ytBox"; box.style.cssText="position:fixed;width:220px;height:220px;left:0;bottom:0;opacity:0.01;pointer-events:none;z-index:-1;overflow:hidden";
   const slot=document.createElement("div"); slot.id="ytPlayer"; box.appendChild(slot); document.body.appendChild(box);
-  window.onYouTubeIframeAPIReady=()=>{ player=new YT.Player("ytPlayer",{width:220,height:220,videoId:YT_VIDEO,
-    playerVars:{autoplay:0,controls:0,loop:1,playlist:YT_VIDEO,playsinline:1,rel:0},
+  window.onYouTubeIframeAPIReady=()=>{ player=new YT.Player("ytPlayer",{width:220,height:220,videoId:YT_LIST[0],
+    playerVars:{autoplay:0,controls:0,playsinline:1,rel:0},
     events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*100)); if(want) player.playVideo(); },
-            onStateChange:e=>{ if(want&&(e.data===0||e.data===2||e.data===5)) setTimeout(()=>{ if(want) player.playVideo(); },300); },
-            onError:()=>{ if(want) setTimeout(()=>{ player.loadVideoById(YT_VIDEO); },2000); }}}); };
+            onStateChange:e=>{ if(!want) return; if(e.data===0){ nextVideo(); } else if(e.data===2||e.data===5) setTimeout(()=>{ if(want) player.playVideo(); },300); },
+            onError:()=>{ if(want) setTimeout(nextVideo,2000); }}}); };
+  function nextVideo(){ ytIdx=(ytIdx+1)%YT_LIST.length; player.loadVideoById(YT_LIST[ytIdx]); }
   // keep the music going: if anything pauses it while the radio is on, start it again
-  setInterval(()=>{ if(!want||!ready) return; const st=player.getPlayerState(); if(st===2||st===0||st===5||st===-1){ player.playVideo(); } if(player.isMuted()) player.unMute(); },4000);
+  setInterval(()=>{ if(!want||!ready) return; const st=player.getPlayerState(); if(st===0){ nextVideo(); } else if(st===2||st===5||st===-1){ player.playVideo(); } if(player.isMuted()) player.unMute(); },4000);
   const tag=document.createElement("script"); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*100)); player.playVideo(); } },
            pause(){ want=false; if(ready) player.pauseVideo(); },
