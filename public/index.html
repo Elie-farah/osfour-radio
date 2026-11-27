@@ -691,116 +691,6 @@ function wrap(text,maxW,maxLines){
   if(lines.length===maxLines && words.join(" ").length>lines.join(" ").length) lines[maxLines-1]=lines[maxLines-1].replace(/.{0,2}$/,"…");
   return lines;
 }
-/* ---------- the couple at the far table: an elegant lady with long black hair and a gentleman, talking over coffee ---------- */
-const CPL={x:640,y:138,w:140,h:72,k:6}; const cpl=document.createElement("canvas"); cpl.width=CPL.w*CPL.k; cpl.height=CPL.h*CPL.k; const pc=cpl.getContext("2d");
-function pe(x,y,rx,ry,rot){ pc.beginPath(); pc.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2); }
-function lg(x0,y0,x1,y1,stops){ const g=pc.createLinearGradient(x0,y0,x1,y1); stops.forEach((c,i)=>g.addColorStop(i/(stops.length-1),c)); return g; }
-function drawCouple(t,w){
-  const talkM = Math.sin(t*0.45)>0, ph=t%28;
-  const sip = ph>21&&ph<25 ? Math.sin((ph-21)/4*Math.PI) : 0;          // now and then she lifts her cup
-  const gest = talkM ? (Math.sin(t*1.7)*0.5+0.5) : 0.15;                // his hand moves while he speaks
-  pc.setTransform(1,0,0,1,0,0); pc.clearRect(0,0,cpl.width,cpl.height);
-  pc.setTransform(CPL.k,0,0,CPL.k,-CPL.x*CPL.k,-CPL.y*CPL.k);
-  pc.lineCap="round"; pc.lineJoin="round";
-
-  /* ===== the lady, on the far side of the table, turned a little toward him ===== */
-  const lx=729, hy=162, tilt=-0.13+(talkM?0.03*Math.sin(t*0.6):0.05*Math.sin(t*1.9));
-  const hs=(w-0.7)*1.6+Math.sin(t*1.25)*0.6;                             // the wind in her hair
-  // hair behind: long, black, falling past the shoulders
-  pc.fillStyle=lg(lx-12,150,lx+12,200,["#1c1210","#0d0807"]);
-  pc.beginPath(); pc.moveTo(lx-6.5,hy-4);
-  pc.bezierCurveTo(lx-10,hy+6,lx-10.5+hs*0.4,hy+20,lx-9+hs,hy+31);
-  pc.quadraticCurveTo(lx-6,hy+36,lx-4,hy+30); pc.lineTo(lx+5,hy+30);
-  pc.quadraticCurveTo(lx+7,hy+34,lx+9.5+hs,hy+30);
-  pc.bezierCurveTo(lx+10.5+hs*0.4,hy+19,lx+10,hy+5,lx+6.5,hy-4); pc.closePath(); pc.fill();
-  // shoulders and dress: deep wine silk, light from the sunset on her left
-  pc.fillStyle=lg(lx-16,176,lx+16,196,["#7a2a30","#4a1419","#2a0a0e"]);
-  pc.beginPath(); pc.moveTo(lx-3,173.5);
-  pc.bezierCurveTo(lx-9,174.5,lx-15,176,lx-16.5,183); pc.lineTo(lx-17,204); pc.lineTo(lx+17,204); pc.lineTo(lx+16.5,183);
-  pc.bezierCurveTo(lx+15,176,lx+9,174.5,lx+3,173.5); pc.closePath(); pc.fill();
-  // neckline and neck
-  pc.fillStyle=lg(lx-3,170,lx+3,182,["#c58e69","#9a6447"]);
-  pc.beginPath(); pc.moveTo(lx-2.3,168.5); pc.lineTo(lx+2.3,168.5); pc.lineTo(lx+2.6,174); pc.lineTo(lx,180); pc.lineTo(lx-2.6,174); pc.closePath(); pc.fill();
-  pc.fillStyle="rgba(240,220,190,.8)"; pe(lx,176.2,0.55,0.55); pc.fill();               // a small pendant
-  // hair falling in front of the shoulders
-  pc.fillStyle="#120b09";
-  pc.beginPath(); pc.moveTo(lx-6,hy+2); pc.quadraticCurveTo(lx-9.5,hy+14,lx-8+hs*0.6,hy+27); pc.quadraticCurveTo(lx-5.5,hy+20,lx-4.2,hy+6); pc.closePath(); pc.fill();
-  pc.beginPath(); pc.moveTo(lx+5.6,hy+2); pc.quadraticCurveTo(lx+9,hy+14,lx+8.5+hs*0.6,hy+25); pc.quadraticCurveTo(lx+5.6,hy+18,lx+4,hy+6); pc.closePath(); pc.fill();
-  // head
-  pc.save(); pc.translate(lx,hy); pc.rotate(tilt);
-  pc.fillStyle=lg(-5,-6,5,6,["#d7a07a","#a8714f","#7c4f37"]); pe(-0.3,0.2,4.5,5.8); pc.fill();
-  pc.fillStyle="rgba(70,35,28,.28)"; pe(-2.1,-0.6,0.9,0.4); pc.fill(); pe(1.3,-0.6,0.9,0.4); pc.fill();
-  pc.fillStyle="rgba(130,45,45,.35)"; pe(-0.4,3.1,1.1,0.45); pc.fill();
-  pc.fillStyle=lg(-6,-7,6,2,["#24170f","#0e0907"]);       // side-parted hair framing the face
-  pc.beginPath(); pc.moveTo(-5.4,3.5); pc.bezierCurveTo(-6.8,-4,-4,-7.6,0.4,-7.4); pc.bezierCurveTo(5.4,-7.2,6.6,-3,5.2,3.8);
-  pc.bezierCurveTo(4.6,-1.5,3.4,-4.4,-0.6,-4.8); pc.bezierCurveTo(-3.4,-4.2,-4.4,-1,-4.4,4.5); pc.closePath(); pc.fill();
-  pc.restore();
-  // her arm: elbow on the table, the cup in her hand
-  const cupX=715+sip*9, cupY=197.5-sip*22;
-  pc.strokeStyle=lg(lx-16,180,cupX,cupY,["#d29a74","#a06a4b"]); pc.lineWidth=2.6;
-  pc.beginPath(); pc.moveTo(lx-13,182); pc.quadraticCurveTo(lx-17,196,cupX+1.5,cupY+2.2); pc.stroke();
-  pc.fillStyle="#b07a58"; pe(cupX+1,cupY+0.6,1.8,1.3); pc.fill();
-  pc.fillStyle="#f2ebe1"; pc.fillRect(cupX-1.5,cupY-2.6,3,2.8); pc.fillStyle="rgba(120,90,70,.5)"; pc.fillRect(cupX-1.5,cupY-0.2,3,0.4);
-  // her other forearm resting on the table edge
-  pc.strokeStyle=lg(lx+14,182,lx+3,200,["#a06a4b","#7c4f37"]); pc.lineWidth=2.4; pc.beginPath(); pc.moveTo(lx+13.5,182); pc.quadraticCurveTo(lx+12,197,lx+3,200); pc.stroke();
-  pc.fillStyle="#a8714f"; pe(lx+2,200,1.7,1.2); pc.fill();
-  // warm sunset rim on her hair and shoulders
-  pc.strokeStyle="rgba(255,196,130,.45)"; pc.lineWidth=0.6;
-  pc.beginPath(); pc.arc(lx-0.5,hy+0.2,6.6,Math.PI*1.08,Math.PI*1.5); pc.stroke();
-  pc.beginPath(); pc.moveTo(lx-16.3,186); pc.bezierCurveTo(lx-15,177,lx-10,175,lx-6,174.6); pc.stroke();
-
-  /* ===== the gentleman, seen from behind his chair, turned toward her ===== */
-  const mx=679, my=157, nod=talkM?0.05*Math.sin(t*2.4):0.02*Math.sin(t*0.8);
-  // jacket: charcoal navy with soft shading
-  pc.fillStyle=lg(mx-18,170,mx+18,192,["#3b4352","#232a36","#141821"]);
-  pc.beginPath(); pc.moveTo(mx-4,167);
-  pc.bezierCurveTo(mx-9,167.6,mx-15.5,168.6,mx-17.2,172.5); pc.lineTo(mx-18,200); pc.lineTo(mx+17.5,200); pc.lineTo(mx+17,172.5);
-  pc.bezierCurveTo(mx+15.5,168.6,mx+9,167.6,mx+4,167); pc.closePath(); pc.fill();
-  pc.strokeStyle="rgba(10,12,18,.6)"; pc.lineWidth=0.5; pc.beginPath(); pc.moveTo(mx+1,169); pc.quadraticCurveTo(mx+2,184,mx+1,200); pc.stroke(); // back seam
-  // collar of the jacket and the white shirt
-  pc.fillStyle="#2d3442"; pc.beginPath(); pc.moveTo(mx-4.5,166.8); pc.quadraticCurveTo(mx,169.5,mx+5,166.6); pc.lineTo(mx+5.5,169); pc.quadraticCurveTo(mx,172,mx-5,169.2); pc.closePath(); pc.fill();
-  pc.fillStyle="#ece6da"; pc.beginPath(); pc.moveTo(mx-3.8,165.6); pc.quadraticCurveTo(mx,167.4,mx+4.2,165.4); pc.lineTo(mx+4.4,167); pc.quadraticCurveTo(mx,169,mx-4,167.2); pc.closePath(); pc.fill();
-  pc.fillStyle=lg(mx-3,160,mx+3,167,["#9b6747","#7a4e36"]); pc.fillRect(mx-2.6,161,5.4,5.4);   // neck
-  // head from behind, turned toward her: hair, ear, the line of the jaw
-  pc.save(); pc.translate(mx,my); pc.rotate(0.16+nod);
-  pc.fillStyle=lg(-5,-6,6,6,["#7e5038","#b47e5a"]); pe(0.4,0,5.1,6.3); pc.fill();
-  pc.fillStyle=lg(-6,-7,4,6,["#2a1d16","#100b08"]);
-  pc.beginPath(); pc.moveTo(-4.9,3.6); pc.bezierCurveTo(-6.2,-4.4,-3.2,-7.4,1,-7.1); pc.bezierCurveTo(4.6,-6.8,5.9,-4.6,5.5,-2.2);
-  pc.bezierCurveTo(4.2,-3.4,3,-3,2.4,-1.6); pc.bezierCurveTo(2,0.6,1.8,2.8,1.2,4.6); pc.bezierCurveTo(-1,5.6,-3.4,5.2,-4.9,3.6); pc.closePath(); pc.fill();
-  pc.fillStyle="#93603f"; pe(1.9,1.2,0.9,1.7,0.15); pc.fill();  // ear
-  pc.fillStyle="rgba(50,32,24,.3)"; pc.beginPath(); pc.ellipse(4,3.6,1.3,1.9,0.2,0,Math.PI*2); pc.fill();
-  pc.restore();
-  // his right arm reaching toward the table, the hand moving as he talks
-  const hX=703+gest*2, hY=197.5-gest*7;
-  pc.strokeStyle=lg(mx+14,176,hX,hY,["#2a313d","#181d26"]); pc.lineWidth=4;
-  pc.beginPath(); pc.moveTo(mx+15,177); pc.quadraticCurveTo(mx+21,193,hX-1.5,hY+1.2); pc.stroke();
-  pc.fillStyle="#ece6da"; pe(hX-0.6,hY+1,1.3,1.6,0.6); pc.fill();        // cuff
-  pc.fillStyle="#a8714f"; pe(hX+1.2,hY-0.2,1.9,1.4,-0.5); pc.fill();      // hand
-  // rim light on his hair and shoulder
-  pc.strokeStyle="rgba(255,196,130,.42)"; pc.lineWidth=0.6;
-  pc.beginPath(); pc.arc(mx+0.4,my,6.9,Math.PI*1.05,Math.PI*1.55); pc.stroke();
-  pc.beginPath(); pc.moveTo(mx-18.4,182); pc.bezierCurveTo(mx-17,171,mx-11,168,mx-5,167.4); pc.stroke();
-  pc.globalCompositeOperation="source-atop";
-  // evening haze over both of them, so they sit softly in the distance
-  pc.fillStyle="rgba(214,160,112,.16)"; pc.fillRect(CPL.x,CPL.y,CPL.w,CPL.h);
-  pc.globalCompositeOperation="source-over";
-
-  // put them in the scene, softly
-  cx.save(); cx.filter="blur(0.35px)"; cx.drawImage(cpl,CPL.x,CPL.y,CPL.w,CPL.h); cx.restore();
-
-  // the chairs and the table stay in front of them
-  cx.save(); cx.beginPath();
-  cx.moveTo(590,190); cx.lineTo(627,183); cx.lineTo(660,180.5); cx.lineTo(698,184); cx.lineTo(698,330); cx.lineTo(590,330); cx.closePath();
-  cx.moveTo(691,200.5); cx.lineTo(763,199); cx.lineTo(764,240); cx.lineTo(691,240); cx.closePath();
-  cx.clip(); cx.drawImage(photo,0,0,PW,PH); cx.restore();
-
-  // cups resting on the table, and her forearm on its edge
-  cx.save(); cx.filter="blur(0.3px)";
-  cx.fillStyle="#efe7dc"; cx.beginPath(); cx.ellipse(704,201.2,3.4,0.95,0,0,Math.PI*2); cx.fill(); cx.fillRect(702.4,197.8,3.2,3.2);
-  cx.fillStyle="#efe7dc"; cx.beginPath(); cx.ellipse(716,201.4,3.4,0.95,0,0,Math.PI*2); cx.fill();
-  if(!sip){ cx.fillRect(714.5,198.2,3,3); }
-  cx.restore();
-}
 function drawBoard(t){
   const c=boardContent(t); if(!c) return;
   const B=BOARD;
@@ -830,7 +720,6 @@ function frame(now){
   SWAY.forEach(r=>sway(r,T,w));
   flag(T,w);
   lamps(T);
-  drawCouple(T,w);
   coffeeSteam(T,dt);
   drawBoard(T);
   if(!reduce) wind(T,dt,w);
