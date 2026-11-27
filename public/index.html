@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Osfour Radio Station: a Lebanese village café at sunset, an old radio playing day and night, and a notebook for every visitor.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='18' width='52' height='38' rx='8' fill='%236a3b1a'/%3E%3Ccircle cx='24' cy='37' r='10' fill='%23c9a46a'/%3E%3Crect x='38' y='30' width='14' height='5' rx='2' fill='%23f6b54a'/%3E%3Cpath d='M18 18 40 6' stroke='%236a3b1a' stroke-width='3'/%3E%3C/svg%3E">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Osfour Radio Station</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Reem+Kufi:wght@500;700&family=Caveat:wght@500;700&family=Aref+Ruqaa:wght@400;700&display=swap">
+<style>
+/* Layout: a full-bleed living café scene on top, then the 1940s radio beside the programme card, then interviews and the host desk.
+   One warm evening-walnut look, chosen on purpose for every viewer. */
+:root{
+  --wood:#24160d;
+  --wood-2:#33200f;
+  --panel:#3d2a19;
+  --panel-2:#4a331f;
+  --line:#6e4d2f;
+  --cream:#f5e9d3;
+  --muted:#cdb895;
+  --amber:#f6b54a;
+  --amber-deep:#c4761a;
+  --cedar:#46a565;
+  --flag:#e2392e;
+  --ink:#1a0f08;
+  --display:"Limelight", "Playfair Display", Georgia, serif;
+  --body:"Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --arabic:"Reem Kufi", "Noto Kufi Arabic", "Geeza Pro", Tahoma, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--wood);
+  background-image:repeating-linear-gradient(92deg, rgba(255,255,255,.012) 0 3px, rgba(0,0,0,.05) 3px 7px, rgba(255,255,255,.02) 7px 9px);
+  color:var(--cream);font-family:var(--body);font-size:17px;line-height:1.5;
+}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{text-wrap:balance;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+
+/* top bar */
+.top{background:var(--ink);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand b{font-family:var(--display);font-weight:400;font-size:1.55rem;letter-spacing:.06em;color:var(--amber)}
+.brand span{font-family:var(--arabic);font-size:1.15rem;color:var(--cream)}
+.brand small{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.status{display:flex;align-items:center;gap:14px;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:3px 11px;border-radius:99px;border:1px solid var(--line);font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#6b5a48}
+.pill.on{color:#ffd9d4;border-color:var(--flag)}
+.pill.on i{background:var(--flag);box-shadow:0 0 8px var(--flag);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.35}}
+
+/* scene */
+.scene{position:relative;background:#c9a77a;line-height:0}
+#sky{display:block;width:100%;aspect-ratio:972/452;cursor:default}
+@media (max-width:760px){#sky{aspect-ratio:3/2}}
+@media (max-width:480px){#sky{aspect-ratio:1/1}.scene-ui{position:static;background:var(--ink)}}
+.scene-ui{position:absolute;left:0;right:0;bottom:0;line-height:1.4;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;padding:12px max(14px, env(safe-area-inset-right, 0px)) 12px max(14px, env(safe-area-inset-left, 0px));pointer-events:none}
+.scene-ui > *{pointer-events:auto}
+.hint{background:rgba(26,15,8,.72);border:1px solid rgba(246,181,74,.45);padding:7px 13px;border-radius:10px;font-size:.9rem;color:var(--cream);backdrop-filter:blur(4px)}
+.hint b{color:var(--amber)}
+.skyset{display:flex;background:rgba(26,15,8,.72);border:1px solid var(--line);border-radius:10px;overflow:hidden;backdrop-filter:blur(4px)}
+.skyset button{background:none;border:0;padding:6px 11px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.skyset button[aria-pressed="true"]{background:var(--amber);color:var(--ink)}
+
+/* console */
+.console{padding-block:44px 20px}
+.console .wrap{display:block}
+@media (max-width:860px){.console .wrap{grid-template-columns:minmax(0,1fr);justify-items:center}}
+
+.radio{width:340px;max-width:100%;position:relative;user-select:none}
+.cab{position:relative;padding:26px 24px 22px;border-radius:170px 170px 22px 22px;
+  background:
+    repeating-linear-gradient(88deg, rgba(0,0,0,.0) 0 5px, rgba(0,0,0,.12) 5px 6px, rgba(255,220,170,.05) 6px 11px),
+    radial-gradient(120% 80% at 50% 10%, #9a5f2f, #6a3b1a 55%, #3c200c);
+  box-shadow:inset 0 0 0 5px #4a2a12, inset 0 0 0 9px #8a5428, inset 0 8px 30px rgba(255,200,140,.2), 0 24px 40px rgba(0,0,0,.55)}
+.grille{position:relative;height:200px;border-radius:140px 140px 8px 8px;overflow:hidden;
+  background:repeating-linear-gradient(45deg,#c9a46a 0 2px,#a8834d 2px 4px),#b8915a;
+  box-shadow:inset 0 0 0 4px #3c200c, inset 0 6px 18px rgba(0,0,0,.55)}
+.grille::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 60%, rgba(246,181,74,var(--glow,0)), transparent 70%);transition:background .6s}
+.ribs{position:absolute;inset:0;display:flex;justify-content:space-evenly}
+.ribs i{width:9px;height:100%;background:linear-gradient(90deg,#4f2c12,#8b5329 45%,#3c200c);border-radius:5px 5px 0 0}
+.ribs i:nth-child(1),.ribs i:nth-child(7){margin-top:80px}
+.ribs i:nth-child(2),.ribs i:nth-child(6){margin-top:34px}
+.ribs i:nth-child(3),.ribs i:nth-child(5){margin-top:12px}
+.badge{position:absolute;left:50%;top:22px;transform:translateX(-50%);font-family:var(--display);font-size:.9rem;letter-spacing:.14em;color:#f1d59c;background:#3c200c;padding:2px 12px;border-radius:6px;box-shadow:0 0 0 2px #b3864a;line-height:1.4;white-space:nowrap}
+.dial{position:relative;margin-top:16px;height:64px;border-radius:10px;background:#1b0f06;box-shadow:inset 0 0 0 3px #b3864a, inset 0 0 0 6px #3c200c;overflow:hidden}
+.dial-face{position:absolute;inset:8px 10px;border-radius:6px;background:linear-gradient(#e8cf96,#c8a663);transition:filter .6s, box-shadow .6s;filter:brightness(.55) saturate(.6)}
+.radio.on .dial-face{filter:none;box-shadow:0 0 22px rgba(246,181,74,.7), inset 0 0 18px rgba(255,240,190,.8)}
+.ticks{position:absolute;left:6%;right:6%;top:6px;height:12px;background:repeating-linear-gradient(90deg,#4a2a10 0 1px,transparent 1px 9.5%)}
+.ticks::after{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:repeating-linear-gradient(90deg,#4a2a10 0 1px,transparent 1px 1.9%)}
+.marks{position:absolute;left:6%;right:6%;top:20px;display:flex;justify-content:space-between;font-family:var(--display);font-size:.62rem;color:#4a2a10;line-height:1;font-variant-numeric:tabular-nums}
+.stations{position:absolute;left:0;right:0;bottom:4px;height:14px}
+.stations span{position:absolute;transform:translateX(-50%);font-size:.6rem;letter-spacing:.1em;color:#5a3412;font-weight:700;line-height:1}
+.needle{position:absolute;top:2px;bottom:2px;width:2px;background:#b3170c;box-shadow:0 0 4px rgba(179,23,12,.8);transition:left 1.1s cubic-bezier(.5,.1,.2,1);left:20%}
+.presets{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+.presets button{border:0;cursor:pointer;padding:8px 0 7px;border-radius:5px 5px 8px 8px;font-size:.66rem;letter-spacing:.1em;font-weight:700;color:#f1e2c4;
+  background:linear-gradient(#5a3418,#2e1808);box-shadow:0 4px 0 #1a0c03, inset 0 1px 0 rgba(255,220,170,.25);transition:transform .08s, box-shadow .08s}
+.presets button[aria-pressed="true"]{transform:translateY(3px);box-shadow:0 1px 0 #1a0c03, inset 0 1px 0 rgba(255,220,170,.15);color:var(--amber)}
+.knobs{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:0 8px}
+.knobwrap{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;letter-spacing:.16em;color:#f1d59c;text-transform:uppercase}
+.knob{width:56px;height:56px;border-radius:50%;border:0;cursor:grab;position:relative;touch-action:none;
+  background:radial-gradient(circle at 35% 30%, #6b4a2a, #2a1608 70%);box-shadow:0 5px 10px rgba(0,0,0,.6), inset 0 0 0 4px #3a2010, inset 0 0 0 6px #8a5a2c}
+.knob::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:15px;margin-left:-2px;border-radius:2px;background:#f1d59c}
+.knob.vol{transform:rotate(var(--rot,0deg))}
+.power{width:64px;height:64px;font-size:.62rem;font-weight:700;letter-spacing:.1em;color:#f1d59c;cursor:pointer}
+.power::after{display:none}
+.radio.on .power{color:var(--amber);text-shadow:0 0 8px var(--amber)}
+.tube{width:12px;height:12px;border-radius:50%;background:#3a1f0c;transition:all .5s}
+.radio.on .tube{background:#ffb04a;box-shadow:0 0 12px #ff9a2a, 0 0 2px #fff}
+.feet{display:flex;justify-content:space-between;padding:0 40px}
+.feet i{width:44px;height:10px;background:#2a1608;border-radius:0 0 8px 8px}
+
+.prog{display:flex;flex-direction:column;gap:22px;min-width:0;width:100%;max-width:820px}
+.eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.now h2{font-family:var(--display);font-weight:400;font-size:clamp(1.9rem,4vw,2.7rem);color:var(--amber);line-height:1.1;margin-top:4px}
+.now .ar{font-family:var(--arabic);font-size:1.25rem;color:var(--cream);margin-top:4px}
+.now p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.tag{font-size:.8rem;padding:3px 10px;border-radius:6px;background:var(--panel);border:1px solid var(--line);color:var(--cream)}
+.sched{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:480px){.sched{grid-template-columns:minmax(0,1fr)}}
+.slot{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.slot.live{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.slot .when{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.slot .when em{font-style:normal;color:var(--amber)}
+.slot .what{font-family:var(--display);font-size:1.2rem;margin-top:4px}
+.slot .hrs{font-size:.88rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.note{border-left:3px solid var(--cedar);padding:4px 0 4px 14px;color:var(--cream);font-style:italic;max-width:62ch}
+.note.empty{color:var(--muted);border-left-color:var(--line)}
+.note small{display:block;font-style:normal;color:var(--muted);font-size:.8rem;margin-top:4px}
+
+.tuner{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.pwr{background:var(--amber);color:var(--ink);border:0;border-radius:99px;padding:8px 18px;font-weight:700;cursor:pointer}
+.pwr[aria-pressed="true"]{background:var(--ink);color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{background:var(--ink);border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:5px 12px;font-size:.85rem;cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
+.volrow{flex-direction:row;align-items:center;gap:8px;font-size:.85rem}
+.volrow input{width:120px;padding:0;accent-color:var(--amber);background:none;border:0}
+
+/* lower sections */
+.lower{padding-block:28px 40px}
+.lower .wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:860px){.lower .wrap{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--wood-2);border:1px solid var(--line);border-radius:14px;padding:20px 22px;min-width:0}
+.card h3{font-family:var(--display);font-weight:400;font-size:1.35rem;color:var(--cream)}
+.card p{color:var(--muted);margin:8px 0 0}
+.list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;background:var(--panel);border-radius:10px}
+.date{font-variant-numeric:tabular-nums;text-align:center;line-height:1.1;min-width:52px;padding:6px 4px;border-radius:8px;background:var(--ink);color:var(--amber);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase}
+.date b{display:block;font-size:1.3rem;color:var(--cream);letter-spacing:0}
+.guest b{display:block}
+.guest span{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.del{background:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;cursor:pointer;color:var(--muted);font-size:.8rem}
+.empty-state{margin-top:14px;padding:16px;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}
+.steps{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.steps li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;color:var(--cream)}
+.steps li i{font-style:normal;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);font-size:.85rem;color:var(--amber)}
+.soon{display:inline-block;margin-top:14px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);background:var(--muted);padding:3px 10px;border-radius:6px}
+
+.plcard{grid-column:1/-1}
+.plcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:14px}
+@media (max-width:600px){.plcols{grid-template-columns:minmax(0,1fr)}}
+.pl{margin:8px 0 0;padding-left:1.6em;display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.pl a{color:var(--cream);text-decoration:none;border-bottom:1px solid var(--line)}
+.pl a:hover{color:var(--amber);border-color:var(--amber)}
+.pl span{font-family:var(--arabic);color:var(--muted);margin-left:8px;font-size:.92em}
+/* host desk */
+.desk{padding-block:0 48px}
+.desk .card{border-color:var(--amber-deep)}
+.desk h3 small{font-family:var(--body);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-left:8px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:760px){.form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.form .wide{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;letter-spacing:.06em;color:var(--muted);min-width:0}
+input,select,textarea{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.btn{background:var(--amber);color:var(--ink);border:0;border-radius:9px;padding:9px 18px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.saved{font-size:.88rem;color:var(--cedar)}
+.subhead{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--display);font-size:1.1rem}
+
+footer{border-top:1px solid var(--line);background:var(--ink);color:var(--muted);font-size:.88rem}
+footer .wrap{padding-block:18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer .ar{font-family:var(--arabic)}
+
+/* visitors' notebook */
+.book[hidden]{display:none}
+.hints{display:flex;gap:8px;flex-wrap:wrap}
+.hint.book-hint{cursor:pointer;border-color:rgba(255,255,255,.35)}
+.book{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(20,10,4,.35);
+  padding:max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}
+.page{position:relative;width:min(560px,100%);max-height:min(88vh,760px);overflow:auto;border-radius:6px 14px 14px 6px;color:#2b2016;
+  background:repeating-linear-gradient(#f6eedb 0 31px,#cfd9e6 31px 32px),#f6eedb;background-position:0 74px;
+  box-shadow:inset 34px 0 0 -30px #d9534f, inset 12px 0 18px -10px rgba(0,0,0,.25), 0 30px 60px rgba(0,0,0,.5);padding:22px 26px 24px 48px}
+@media (min-width:900px){.book{place-items:center start;padding-left:max(4vw, env(safe-area-inset-left, 0px))}.page{width:min(520px,52vw)}}
+.page::before{content:"";position:absolute;left:38px;top:0;bottom:0;width:1.5px;background:#e08a86}
+.page h2{font-family:"Caveat",cursive;font-weight:700;font-size:2.3rem;line-height:1;color:#3a2716}
+.page .sub{font-family:"Caveat",cursive;font-size:1.25rem;color:#6a5440;margin:4px 0 14px}
+.page .x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:1.6rem;line-height:1;color:#6a5440;cursor:pointer;padding:4px 8px}
+.write{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.write input,.write textarea{background:rgba(255,255,255,.55);border:1px solid #c9b896;color:#2b2016;font-family:"Caveat","Aref Ruqaa",cursive;font-size:1.35rem;border-radius:6px}
+.write textarea{min-height:160px}
+.write .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.write button{background:#3a2716;color:#f6eedb;border:0;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer}
+.write button:disabled{opacity:.5}
+.write .msg{font-size:.9rem;color:#8a3b1a}
+.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.notes li{font-family:"Caveat","Aref Ruqaa",cursive;font-size:1.45rem;line-height:1.3;overflow-wrap:anywhere}
+.notes li .who{display:block;font-size:1.05rem;color:#7a6047}
+.notes li h4{margin:0 0 2px;font-size:1.7rem;color:#3a2716}
+.notes li p{margin:0;white-space:pre-wrap}
+.notes li + li{border-top:1px dashed #c9b896;padding-top:12px}
+.notes li .rm{margin-left:8px;font-family:var(--body);font-size:.75rem;border:1px solid #c9b896;background:none;border-radius:6px;color:#7a6047;cursor:pointer;padding:1px 6px}
+.notes .none{color:#7a6047}
+@media (prefers-reduced-motion:reduce){.pill.on i{animation:none}.needle{transition:none}}
+</style>
+
+<script>
+/* Osfour notebook service: talks to the Netlify function at /api/notes */
+(() => {
+  const ls = { get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
+  const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => (b%36).toString(36)).join("");
+  let id = ls.get("osfourId"), secret = ls.get("osfourSecret");
+  if(!id || !secret){ id = rnd(24); secret = rnd(32); ls.set("osfourId",id); ls.set("osfourSecret",secret); }
+  const q = new URLSearchParams(location.search).get("host");
+  if(q){ ls.set("osfourHost", q); history.replaceState(null,"",location.pathname); }
+  const hostKey = ls.get("osfourHost");
+  let cache = [], subs = [];
+  const snap = () => ({ docs: cache.map(d => ({ id:d.id, exists:true, data:()=>({posts:d.posts}) })) });
+  async function refresh(){ try{ const r = await fetch("/api/notes",{cache:"no-store"}); if(r.ok){ cache = await r.json(); subs.forEach(f=>f(snap())); } }catch(e){} }
+  setInterval(refresh, 15000);
+  const empty = { onSnapshot(){ return ()=>{}; }, orderBy(){ return this; }, limit(){ return this; } };
+  const db = {
+    collection(path){
+      if(path!=="guestbook") return empty;
+      const c = { orderBy(){ return c; }, limit(){ return c; }, onSnapshot(fn){ subs.push(fn); if(cache.length) fn(snap()); else refresh(); return ()=>{ subs=subs.filter(x=>x!==fn); }; } };
+      return c;
+    },
+    doc(path){
+      const [col, docId] = path.split("/");
+      return {
+        onSnapshot(){ return ()=>{}; },
+        async set(data){
+          if(col!=="guestbook") throw new Error("unavailable");
+          const headers = {"content-type":"application/json"}; if(hostKey && docId!==id) headers["x-host-key"]=hostKey;
+          const r = await fetch("/api/notes",{method:"POST",headers,body:JSON.stringify({id:docId, secret, posts:data.posts||[]})});
+          if(!r.ok) throw new Error("save failed"); await refresh();
+        },
+        async delete(){ throw new Error("unavailable"); }
+      };
+    }
+  };
+  const user = { async isOwner(){ return !!hostKey; }, async id(){ return id; } };
+  window.claude = { use: async name => name==="db" ? db : name==="user" ? user : null };
+})();
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>OSFOUR</b><span lang="ar">راديو عصفور</span><small>Radio Station · Lebanon</small></div>
+    <div class="status"><span id="clock">Beirut --:--</span><span class="pill" id="onair"><i></i><span id="onairTxt">Off air</span></span></div>
+  </div>
+</header>
+
+<section class="scene" aria-label="A Lebanese village café terrace at sunset with an old radio, overlooking the sea">
+  <canvas id="sky"></canvas>
+  <div class="scene-ui">
+    <div class="hints"><div class="hint" id="hint">Tap the <b>old radio</b> to listen</div>
+    <button class="hint book-hint" id="bookBtn">Tap the <b>chalkboard</b> to read and write in our notebook</button></div>
+  </div>
+</section>
+
+<div class="book" id="book" hidden role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+  <div class="page">
+    <button class="x" id="bookClose" aria-label="Close the notebook">×</button>
+    <h2 id="bookTitle">A little coffee, a lot of Lebanon</h2>
+    <div class="sub">Osfour's notebook. Write an article about music, Lebanon or the hobby you love, and sign it with your name.</div>
+    <div class="write" id="write">
+      <input id="nbName" maxlength="40" placeholder="Your name">
+      <input id="nbTitle" maxlength="100" placeholder="Title of your article">
+      <textarea id="nbText" maxlength="3000" placeholder="Write your article… اكتب مقالتك"></textarea>
+      <div class="row"><button id="nbSign">Publish in the notebook</button><span class="msg" id="nbMsg" aria-live="polite"></span></div>
+    </div>
+    <ul class="notes" id="nbList"><li class="none">The notebook is waiting for its first article.</li></ul>
+  </div>
+</div>
+
+<div hidden id="extras">
+<section class="console">
+  <div class="wrap">
+    <div class="prog">
+      <div class="tuner" role="group" aria-label="Radio controls">
+        <button class="pwr" id="power" aria-pressed="false">Turn on</button>
+        <label class="volrow">Volume<input id="vol" type="range" min="0" max="100" value="80"></label>
+      </div>
+      <div class="now">
+        <div class="eyebrow" id="nowEyebrow">Morning playlist · chosen by Osfour</div>
+        <h2 id="nowTitle">Osfour's music is on its way</h2>
+        <p id="nowDesc">The host is choosing the songs. Check back soon.</p>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:8px">Osfour's daily schedule · Beirut time</div>
+        <div class="sched">
+          <div class="slot" id="slotM"><div class="when"><span>Morning</span><em hidden>On now</em></div><div class="what" id="mName">Morning playlist</div><div class="hrs" id="mHrs">06:00 to 19:00</div></div>
+          <div class="slot" id="slotN"><div class="when"><span>Night</span><em hidden>On now</em></div><div class="what" id="nName">Night playlist</div><div class="hrs" id="nHrs">19:00 to 06:00</div></div>
+        </div>
+      </div>
+      <div class="note empty" id="note">The host's note for listeners will appear here.</div>
+    </div>
+  </div>
+</section>
+
+<section class="lower">
+  <div class="wrap">
+    <div class="card plcard">
+      <h3>Osfour's playlist</h3>
+      <p>Fairuz songs on piano, chosen by the host. Tap a song to listen to piano versions on YouTube.</p>
+      <div class="plcols">
+        <div><div class="eyebrow">Morning</div><ol class="pl" id="plM"></ol></div>
+        <div><div class="eyebrow">Night</div><ol class="pl" id="plN"></ol></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Coming up on air</h3>
+      <p>Conversations about music and the hobbies people love, with guests invited by Osfour.</p>
+      <ul class="list" id="ivList" hidden></ul>
+      <div class="empty-state" id="ivEmpty">No interviews are scheduled yet. When the host books a guest, the date and topic show up here.</div>
+    </div>
+    <div class="card">
+      <h3>Guest studio</h3>
+      <p>The radio is open to everyone. Only invited guests can speak on air.</p>
+      <ol class="steps">
+        <li><i>1</i><span>Osfour sends you a personal invitation for your interview time.</span></li>
+        <li><i>2</i><span>You sign in here with that invitation at the booked time.</span></li>
+        <li><i>3</i><span>The host lets your microphone through and your voice goes out on the radio.</span></li>
+      </ol>
+      <span class="soon">Opening soon</span>
+    </div>
+  </div>
+</section>
+
+<section class="desk" id="desk" hidden>
+  <div class="wrap">
+    <div class="card">
+      <h3>Host desk <small>Only you see this</small></h3>
+      <p>Set when your morning and night playlists start. To add or change songs, send them to Claude in your project.</p>
+      <div class="form">
+        <label>Morning starts<select id="fMStart"></select></label>
+        <label>Night starts<select id="fNStart"></select></label>
+        <label class="wide">Your note to listeners<textarea id="fNote" maxlength="400" placeholder="A dedication, a recommendation, or tonight's mood"></textarea></label>
+      </div>
+      <div class="actions"><button class="btn" id="saveSched">Save schedule</button><span class="saved" id="savedMsg" aria-live="polite"></span></div>
+
+      <div class="subhead">Book an interview</div>
+      <div class="form">
+        <label>Guest name<input id="gName" maxlength="80" placeholder="Guest's name"></label>
+        <label class="wide" style="grid-column:span 2">Topic<input id="gTopic" maxlength="140" placeholder="Their music, or the hobby they love"></label>
+        <label>Date and time (Beirut)<input id="gWhen" type="datetime-local"></label>
+      </div>
+      <div class="actions"><button class="btn" id="addIv">Add to schedule</button><span class="saved" id="ivMsg" aria-live="polite"></span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Music chosen by Osfour. On air 24 hours a day.</span>
+    <span class="ar" lang="ar">أهلا وسهلا</span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+/* ---------- Osfour's playlists ---------- */
+const $ = id => document.getElementById(id);
+let schedule = {morningStart:6, nightStart:19, note:""};
+let PL = {morning:[], night:[]};
+function beirutNow(){
+  const p = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Beirut",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+  const g = t => +p.find(x=>x.type===t).value;
+  return {h:g("hour"), m:g("minute")};
+}
+function inMorning(h){ const a=schedule.morningStart, b=schedule.nightStart; return a<b ? (h>=a && h<b) : (h>=a || h<b); }
+const slotNow = () => inMorning(beirutNow().h) ? "morning" : "night";
+const hh = n => String(n).padStart(2,"0")+":00";
+function renderPlaylist(){
+  [["plM","morning"],["plN","night"]].forEach(([id,k])=>{ const ol=$(id); ol.textContent="";
+    PL[k].forEach(t=>{ const li=document.createElement("li"); const el=document.createElement(t.link&&/^https:\/\//.test(t.link)?"a":"b");
+      el.textContent=t.title||"Untitled"; if(el.tagName==="A"){ el.href=t.link; el.target="_blank"; el.rel="noopener"; }
+      li.appendChild(el); if(t.ar){ const s=document.createElement("span"); s.lang="ar"; s.textContent=t.ar; li.appendChild(s); } ol.appendChild(li); }); });
+}
+const playable = slot => PL[slot].filter(t=>t.file && t.duration>0);
+function listFor(slot){ return playable(slot).length ? playable(slot) : playable(slot==="morning"?"night":"morning"); }
+
+// Every listener hears the same song at the same moment: the playlist runs on the wall clock.
+function trackNow(){
+  const list=listFor(slotNow()); if(!list.length) return null;
+  const total=list.reduce((a,t)=>a+t.duration,0); let pos=(Date.now()/1000)%total;
+  for(const t of list){ if(pos<t.duration) return {t,offset:pos}; pos-=t.duration; }
+  return {t:list[0],offset:0};
+}
+const audio = new Audio(); audio.preload="auto";
+let playing=false, volume=0.8, current=null;
+function playNow(){
+  const n=trackNow(); current=n&&n.t; updateNow();
+  if(!n){ return; }
+  const src=new URL(n.t.file, location.href).href;
+  if(audio.src!==src) audio.src=n.t.file;
+  const go=()=>{ try{ audio.currentTime=n.offset; }catch(e){} audio.volume=volume; audio.play().catch(()=>{}); };
+  if(audio.readyState>=1) go(); else audio.addEventListener("loadedmetadata",go,{once:true});
+}
+audio.addEventListener("ended",()=>{ if(playing) playNow(); });
+function setPower(on){
+  playing=on;
+  if(on){ if(!trackNow()){ playing=false; $("hint").innerHTML="The songs are listed below. <b>Music on the radio is coming soon</b>"; updateNow(); return; } playNow(); }
+  else { audio.pause(); }
+  $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
+  $("onair").classList.toggle("on",playing); $("onairTxt").textContent=playing?"On air":"Off air";
+  $("hint").innerHTML = playing ? "Listening to <b>Osfour</b>. Tap the radio again to switch off" : "Tap the <b>old radio</b> to listen";
+}
+let lastSlot=slotNow();
+setInterval(()=>{ const s2=slotNow(); if(s2!==lastSlot){ lastSlot=s2; if(playing) playNow(); } },20000);
+window.addEventListener("pagehide",()=>{ playing=false; audio.pause(); });
+$("power").addEventListener("click",()=>setPower(!playing));
+$("vol").addEventListener("input",()=>{ volume=$("vol").value/100; audio.volume=volume; });
+
+function updateNow(){
+  const slot=slotNow(), list=listFor(slot), label=slot==="morning"?"Morning playlist":"Night playlist";
+  $("nowEyebrow").textContent=label+" · chosen by Osfour";
+  if(current){ $("nowTitle").textContent=current.title||"Untitled"; $("nowDesc").textContent=current.artist||""; }
+  else if(list.length){ $("nowTitle").textContent=label; $("nowDesc").textContent=list.length+(list.length===1?" song":" songs")+". Tap the radio to listen."; }
+  else { $("nowTitle").textContent="Osfour's music is on its way"; $("nowDesc").textContent="The host is choosing the songs. Check back soon."; }
+  const cnt=n=>n? n+(n===1?" song":" songs") : "Songs coming soon";
+  $("mName").textContent="Morning playlist"; $("nName").textContent="Night playlist";
+  $("mHrs").textContent=hh(schedule.morningStart)+" to "+hh(schedule.nightStart)+" · "+cnt(playable("morning").length);
+  $("nHrs").textContent=hh(schedule.nightStart)+" to "+hh(schedule.morningStart)+" · "+cnt(playable("night").length);
+  const m=slot==="morning";
+  $("slotM").classList.toggle("live",m); $("slotN").classList.toggle("live",!m);
+  $("slotM").querySelector("em").hidden=!m; $("slotN").querySelector("em").hidden=m;
+  const note=$("note");
+  if(schedule.note){ note.className="note"; note.textContent="“"+schedule.note+"”"; const s=document.createElement("small"); s.textContent="Osfour, your host"; note.appendChild(s); }
+  else { note.className="note empty"; note.textContent="The host's note for listeners will appear here."; }
+}
+function clock(){ const n=beirutNow(); $("clock").textContent="Beirut "+String(n.h).padStart(2,"0")+":"+String(n.m).padStart(2,"0"); }
+setInterval(()=>{clock(); updateNow();},30000); clock(); updateNow();
+fetch("playlist.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{ if(d){ PL.morning=Array.isArray(d.morning)?d.morning:[]; PL.night=Array.isArray(d.night)?d.night:[]; renderPlaylist(); updateNow(); } }).catch(()=>{});
+
+/* ---------- shared station data ---------- */
+let db=null, isOwner=false, interviews=[];
+function renderInterviews(){
+  const ul=$("ivList"); ul.textContent="";
+  const now=Date.now()-3*3600e3;
+  const rows=interviews.filter(x=>!x.whenMs || x.whenMs>now || isOwner);
+  ul.hidden=!rows.length; $("ivEmpty").hidden=!!rows.length;
+  rows.forEach(x=>{
+    const li=document.createElement("li"), d=document.createElement("div"), g=document.createElement("div");
+    d.className="date"; g.className="guest";
+    const parts=(x.when||"").split("T"), ymd=(parts[0]||"").split("-");
+    const mon=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][(+ymd[1]||1)-1];
+    d.append(mon); const b=document.createElement("b"); b.textContent=ymd[2]||"?"; d.appendChild(b); d.append(parts[1]||"");
+    const nm=document.createElement("b"); nm.textContent=x.guest||"Guest"; const tp=document.createElement("span"); tp.textContent=x.topic||"";
+    g.append(nm,tp); li.append(d,g);
+    if(isOwner){ const del=document.createElement("button"); del.className="del"; del.textContent="Remove"; del.setAttribute("aria-label","Remove "+(x.guest||"guest"));
+      del.onclick=()=>db.doc("interviews/"+x.id).delete().catch(()=>{}); li.appendChild(del); } else li.appendChild(document.createElement("span"));
+    ul.appendChild(li);
+  });
+}
+function fillDesk(){
+  const hrs=Array.from({length:24},(_,i)=>`<option value="${i}">${hh(i)}</option>`).join("");
+  $("fMStart").innerHTML=hrs; $("fNStart").innerHTML=hrs;
+  $("fMStart").value=schedule.morningStart; $("fNStart").value=schedule.nightStart; $("fNote").value=schedule.note||"";
+}
+function applySchedule(d){
+  if(!d) return;
+  if(Number.isInteger(d.morningStart)&&d.morningStart>=0&&d.morningStart<24) schedule.morningStart=d.morningStart;
+  if(Number.isInteger(d.nightStart)&&d.nightStart>=0&&d.nightStart<24) schedule.nightStart=d.nightStart;
+  schedule.note = typeof d.note==="string" ? d.note.slice(0,400) : "";
+  updateNow();
+}
+async function initShared(){
+  if(!window.claude?.use) return;
+  const [d,u]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+  db=d; isOwner = (await u?.isOwner?.()) ?? false;
+  try{ myId = u?.id ? await u.id() : null; }catch(e){ myId=null; }
+  startNotebook();
+  if(isOwner){ $("desk").hidden=false; fillDesk(); }
+  if(!db) return;
+  db.doc("station/schedule").onSnapshot(s=>{ if(s.exists){ applySchedule(s.data()); if(isOwner && !deskDirty) fillDesk(); } }, ()=>{});
+  db.collection("interviews").orderBy("when").onSnapshot(q=>{
+    interviews=q.docs.map(x=>{const v=x.data()||{}; return {id:x.id, guest:String(v.guest||"").slice(0,80), topic:String(v.topic||"").slice(0,140), when:String(v.when||""), whenMs:Date.parse(v.when||"")||0};});
+    renderInterviews();
+  }, ()=>{});
+}
+let deskDirty=false;
+/* visitors' notebook */
+let myId=null, nbStarted=false, myNote=null;
+function renderNotes(posts){
+  const ul=$("nbList"); ul.textContent="";
+  if(!posts.length){ const li=document.createElement("li"); li.className="none"; li.textContent="The notebook is waiting for its first article."; ul.appendChild(li); return; }
+  posts.forEach(n=>{ const li=document.createElement("li");
+    if(n.title){ const h=document.createElement("h4"); h.textContent=n.title; li.appendChild(h); }
+    const p=document.createElement("p"); p.textContent=n.text; li.appendChild(p);
+    const who=document.createElement("span"); who.className="who";
+    const d=n.at? new Date(n.at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Beirut"}) : "";
+    who.textContent="— "+(n.name||"A visitor")+(d?" · "+d:""); li.appendChild(who);
+    if(isOwner || n.uid===myId){ const b=document.createElement("button"); b.className="rm"; b.textContent="Remove"; b.onclick=()=>removePost(n); who.appendChild(b); }
+    ul.appendChild(li); });
+}
+let nbDocs={}, boardPosts=[];
+function cleanPosts(v){ return (Array.isArray(v.posts)?v.posts:[]).slice(0,50).map(x=>({title:String(x?.title||"").slice(0,100), text:String(x?.text||"").slice(0,3000), at:+x?.at||0, name:String(x?.name||v.name||"").slice(0,40)})).filter(x=>x.text); }
+function startNotebook(){
+  if(nbStarted||!db) return; nbStarted=true;
+  db.collection("guestbook").limit(500).onSnapshot(q=>{
+    nbDocs={}; const all=[];
+    q.docs.forEach(x=>{ const posts=cleanPosts(x.data()||{}); nbDocs[x.id]=posts; posts.forEach(p=>all.push({...p,uid:x.id})); });
+    all.sort((a,b)=>b.at-a.at); boardPosts=all.slice(0,8); renderNotes(all);
+  }, ()=>{});
+}
+async function removePost(n){
+  const rest=(nbDocs[n.uid]||[]).filter(p=>!(p.at===n.at&&p.text===n.text));
+  try{ await db.doc("guestbook/"+n.uid).set({posts:rest}); }catch(e){}
+}
+function openBook(){
+  $("book").hidden=false; $("nbMsg").textContent = db ? "" : "The notebook is resting. Try again in a moment.";
+  setTimeout(()=>$("nbName").value ? $("nbText").focus() : $("nbName").focus(),50);
+}
+function closeBook(){ $("book").hidden=true; }
+$("bookBtn").addEventListener("click",openBook);
+$("bookClose").addEventListener("click",closeBook);
+$("book").addEventListener("click",e=>{ if(e.target.id==="book") closeBook(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("book").hidden) closeBook(); });
+$("nbSign").addEventListener("click",async()=>{
+  const text=$("nbText").value.trim(), name=$("nbName").value.trim(), title=$("nbTitle").value.trim();
+  if(!name){ $("nbMsg").textContent="Write your name so readers know who wrote it."; return; }
+  if(!text){ $("nbMsg").textContent="Write your article first."; return; }
+  if(!db||!myId){ $("nbMsg").textContent="The notebook is resting. Try again in a moment."; return; }
+  $("nbSign").disabled=true;
+  const mine=(nbDocs[myId]||[]).slice(0,49);
+  try{ await db.doc("guestbook/"+myId).set({posts:[{name:name.slice(0,40),title:title.slice(0,100),text:text.slice(0,3000),at:Date.now()},...mine]});
+    $("nbTitle").value=""; $("nbText").value=""; $("nbMsg").textContent="Thank you! Your article is in the notebook."; }
+  catch(e){ $("nbMsg").textContent="Your article couldn't be saved. Please try again."; }
+  $("nbSign").disabled=false;
+});
+["fMStart","fNStart","fNote"].forEach(id=>$(id).addEventListener("input",()=>deskDirty=true));
+$("saveSched").addEventListener("click",async()=>{
+  if(!db){ $("savedMsg").textContent="Saving needs you to be signed in to Claude."; return; }
+  const data={morningStart:+$("fMStart").value, nightStart:+$("fNStart").value, note:$("fNote").value.trim().slice(0,400), updatedAt:Date.now()};
+  if(data.morningStart===data.nightStart){ $("savedMsg").textContent="Morning and night need different start times."; return; }
+  $("saveSched").disabled=true;
+  try{ await db.doc("station/schedule").set(data); deskDirty=false; applySchedule(data); $("savedMsg").textContent="Saved. Every listener's radio now follows this schedule."; }
+  catch(e){ $("savedMsg").textContent="Could not save: "+(e?.message||"try again in a moment."); }
+  $("saveSched").disabled=false;
+});
+$("addIv").addEventListener("click",async()=>{
+  const guest=$("gName").value.trim(), topic=$("gTopic").value.trim(), when=$("gWhen").value;
+  if(!guest||!when){ $("ivMsg").textContent="Add the guest's name and the date and time."; return; }
+  if(!db){ $("ivMsg").textContent="Booking needs you to be signed in to Claude."; return; }
+  $("addIv").disabled=true;
+  try{ await db.collection("interviews").add({guest:guest.slice(0,80),topic:topic.slice(0,140),when,createdAt:Date.now()});
+    $("gName").value=""; $("gTopic").value=""; $("gWhen").value=""; $("ivMsg").textContent="Added to the schedule."; }
+  catch(e){ $("ivMsg").textContent="Could not add: "+(e?.message||"try again in a moment."); }
+  $("addIv").disabled=false;
+});
+initShared();
+
+/* ---------- the live café photo ---------- */
+const cv=$("sky"), cx=cv.getContext("2d");
+const PW=972, PH=452, FOCUS=390;
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const photo=new Image(); let IS=2, ready=false;
+photo.onload=()=>{ IS=photo.naturalWidth/PW; ready=true; }; photo.src="cafe.jpg";
+let S=1, OX=0, OY=0, DPR=1;
+function resize(){
+  const r=cv.getBoundingClientRect(); DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(r.width*DPR); cv.height=Math.round(r.height*DPR);
+  S=Math.max(cv.width/PW, cv.height/PH);
+  OX=Math.min(0,Math.max(cv.width-PW*S, cv.width/2-FOCUS*S)); OY=(cv.height-PH*S)/2;
+}
+// leaves and flowers that move in the wind; anchor is where the plant is rooted
+const SWAY=[
+  {x:576,y:0,w:74,h:54,top:true,amp:2.6,f:1.1,p:0},      // olive branch hanging from above
+  {x:804,y:0,w:34,h:84,top:true,amp:0.9,f:0.8,p:1.2},    // hanging lantern
+  {x:192,y:22,w:112,h:80,top:false,amp:2.0,f:1.3,p:0.6}, // plant on the wall
+  {x:332,y:126,w:56,h:56,top:false,amp:1.6,f:1.5,p:2.1}, // pot beside the radio
+  {x:412,y:142,w:62,h:56,top:false,amp:1.8,f:1.2,p:1.0},
+  {x:444,y:196,w:62,h:36,top:false,amp:1.2,f:1.6,p:2.6},
+  {x:606,y:142,w:54,h:42,top:false,amp:1.5,f:1.4,p:0.3},
+  {x:766,y:146,w:108,h:62,top:false,amp:1.8,f:1.25,p:1.7},
+  {x:826,y:250,w:78,h:48,top:false,amp:1.4,f:1.5,p:2.9},
+  {x:918,y:190,w:54,h:72,top:false,amp:1.6,f:1.35,p:0.9},
+  {x:0,y:244,w:92,h:88,top:false,amp:1.8,f:1.3,p:2.2},
+  {x:380,y:118,w:400,h:30,top:false,amp:0.6,f:0.9,p:0.4}  // distant trees on the hill
+];
+function sway(r,t,w){
+  for(let yy=0; yy<r.h; yy+=1){
+    const u = r.top ? yy/r.h : 1-yy/r.h, k=u*u;
+    const dx = r.amp*k*w*(Math.sin(t*r.f+r.p+yy*0.045)+0.35*Math.sin(t*r.f*2.3+r.p+yy*0.12));
+    cx.drawImage(photo, r.x*IS, (r.y+yy)*IS, r.w*IS, IS*1.2, r.x+dx, r.y+yy, r.w, 1.2);
+  }
+}
+function flag(t,w){ // Lebanese flag cloth waving from its pole
+  const x0=739, x1=773, y0=50, h=36;
+  for(let x=x0; x<x1; x+=1){ const u=(x-x0)/(x1-x0), dy=Math.sin(u*6-t*4.2)*1.6*u*w, sh=Math.cos(u*6-t*4.2)*u*w;
+    cx.drawImage(photo, x*IS, y0*IS, IS*1.2, h*IS, x, y0+dy, 1.2, h);
+    cx.fillStyle = sh>0 ? `rgba(255,240,220,${sh*0.10})` : `rgba(40,10,0,${-sh*0.16})`; cx.fillRect(x,y0+dy+4,1.2,h-8); }
+}
+const LAMPS=[[30,188,34],[414,258,30],[820,64,22]];
+function lamps(t){
+  cx.globalCompositeOperation="lighter";
+  LAMPS.forEach(([x,y,r],i)=>{ const f=0.75+0.15*Math.sin(t*9+i*2)+0.1*Math.sin(t*23+i);
+    const g=cx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,`rgba(255,170,70,${0.32*f})`); g.addColorStop(1,"rgba(255,170,70,0)");
+    cx.fillStyle=g; cx.fillRect(x-r,y-r,2*r,2*r); });
+  { const f=0.5+0.5*Math.sin(t*1.6), g=cx.createRadialGradient(688,366,10,688,366,80); g.addColorStop(0,`rgba(255,210,140,${0.10*f})`); g.addColorStop(1,"rgba(255,210,140,0)"); cx.fillStyle=g; cx.fillRect(608,286,160,160); }
+  if(playing){ const f=0.7+0.3*Math.sin(t*2.4), g=cx.createRadialGradient(268,200,0,268,200,60);
+    g.addColorStop(0,`rgba(255,180,80,${0.35*f})`); g.addColorStop(1,"rgba(255,180,80,0)"); cx.fillStyle=g; cx.fillRect(208,140,120,120); }
+  cx.globalCompositeOperation="source-over";
+}
+const steam=[]; 
+function coffeeSteam(t,dt){
+  if(Math.random()<dt*3) steam.push({x:352+(Math.random()-0.5)*14,y:248,a:0,life:0,ph:Math.random()*6});
+  for(let i=steam.length-1;i>=0;i--){ const s=steam[i]; s.life+=dt; s.y-=dt*9; if(s.life>4){steam.splice(i,1);continue;}
+    const a=Math.sin(Math.PI*s.life/4)*0.13, x=s.x+Math.sin(t*1.4+s.ph+s.life)*4*(s.life/4)+s.life*3;
+    const g=cx.createRadialGradient(x,s.y,0,x,s.y,5+s.life*3); g.addColorStop(0,`rgba(255,250,240,${a})`); g.addColorStop(1,"rgba(255,250,240,0)");
+    cx.fillStyle=g; cx.beginPath(); cx.arc(x,s.y,5+s.life*3,0,7); cx.fill(); }
+}
+const glints=Array.from({length:26},()=>({x:362+Math.random()*230,y:128+Math.random()*16,p:Math.random()*6,s:0.6+Math.random()}));
+function sea(t){ glints.forEach(g=>{ const a=Math.max(0,Math.sin(t*1.8+g.p))**6*0.8; if(a<0.02) return;
+  cx.fillStyle=`rgba(255,236,200,${a})`; cx.fillRect(g.x+Math.sin(t*0.3+g.p)*2,g.y,2.4*g.s,0.8); }); }
+// birds crossing the evening sky
+const birds=[]; let birdWait=1.5;
+function spawnFlock(){ const n=2+Math.floor(Math.random()*5), dir=Math.random()<0.5?1:-1, y=12+Math.random()*60, sp=26+Math.random()*12;
+  for(let i=0;i<n;i++) birds.push({x:(dir>0?280:805)-dir*i*(14+Math.random()*10), y:y+(Math.random()-0.5)*26, v:dir*sp*(0.9+Math.random()*0.2), ph:Math.random()*6, s:0.7+Math.random()*0.7, fl:7+Math.random()*3, glide:0}); }
+function drawBirds(t,dt){
+  birdWait-=dt; if(birdWait<=0){ spawnFlock(); birdWait=6+Math.random()*9; }
+  for(let i=birds.length-1;i>=0;i--){ const b=birds[i]; b.x+=b.v*dt; b.y+=Math.sin(t*0.9+b.ph)*dt*3;
+    if(b.x<270||b.x>815){ birds.splice(i,1); continue; }
+    const edge=Math.min(1,(b.x-280)/20,(805-b.x)/20); if(edge<=0) continue;
+    b.glide = Math.sin(t*0.5+b.ph)>0.6 ? 1 : 0;
+    const f = b.glide ? 0.25 : Math.sin(t*b.fl+b.ph), s=b.s*5.5, d=Math.sign(b.v);
+    cx.globalAlpha=edge; cx.strokeStyle="rgba(46,34,28,0.92)"; cx.fillStyle="rgba(46,34,28,0.92)"; cx.lineWidth=b.s*1.3; cx.lineCap="round";
+    cx.beginPath(); cx.moveTo(b.x-s,b.y-f*s*0.9); cx.quadraticCurveTo(b.x-s*0.45,b.y-s*0.35-f*s*0.2,b.x,b.y); cx.quadraticCurveTo(b.x+s*0.45,b.y-s*0.35-f*s*0.2,b.x+s,b.y-f*s*0.9); cx.stroke();
+    cx.beginPath(); cx.ellipse(b.x+d*s*0.15,b.y+s*0.08,s*0.42,s*0.14,0,0,7); cx.fill(); cx.globalAlpha=1; }
+}
+const motes=Array.from({length:26},()=>({x:Math.random()*PW,y:Math.random()*PH,v:6+Math.random()*12,r:Math.random()*6,s:0.6+Math.random()*1.4,leaf:Math.random()<0.35}));
+function wind(t,dt,w){ motes.forEach(m=>{ m.x+=m.v*dt*w*(m.leaf?2.2:1); m.y+=Math.sin(t*0.8+m.r)*dt*5+(m.leaf?dt*6:0); m.r+=dt;
+  if(m.x>PW+10||m.y>PH){ m.x=-10; m.y=Math.random()*PH*0.8; }
+  if(m.leaf){ cx.save(); cx.translate(m.x,m.y); cx.rotate(m.r*1.6); cx.fillStyle="rgba(120,130,60,0.75)"; cx.beginPath(); cx.ellipse(0,0,3*m.s,1.3*m.s,0,0,7); cx.fill(); cx.restore(); }
+  else { cx.fillStyle=`rgba(255,226,170,${0.25+0.2*Math.sin(t*2+m.r)})`; cx.beginPath(); cx.arc(m.x,m.y,0.7*m.s,0,7); cx.fill(); } }); }
+
+// the chalkboard shows what visitors write, in chalk
+const BOARD={x:650,y:319,w:78,h:100};
+function boardContent(t){
+  if(!$("book").hidden){ const n=$("nbName").value.trim(), ti=$("nbTitle").value.trim(), tx=$("nbText").value.trim();
+    if(n||ti||tx) return {title:ti, text:tx, name:n, a:1}; }
+  if(!boardPosts.length) return null;
+  const per=8, i=Math.floor(t/per)%boardPosts.length, ph=t%per;
+  return {...boardPosts[i], a:Math.max(0,Math.min(1,ph/0.9,(per-ph)/0.9))};
+}
+function wrap(text,maxW,maxLines){
+  const words=text.replace(/\s+/g," ").split(" "), lines=[]; let line="";
+  for(const w of words){ const tst=line?line+" "+w:w; if(cx.measureText(tst).width>maxW && line){ lines.push(line); line=w; if(lines.length>=maxLines) break; } else line=tst; }
+  if(lines.length<maxLines && line) lines.push(line);
+  if(lines.length===maxLines && words.join(" ").length>lines.join(" ").length) lines[maxLines-1]=lines[maxLines-1].replace(/.{0,2}$/,"…");
+  return lines;
+}
+function drawBoard(t){
+  const c=boardContent(t); if(!c) return;
+  const B=BOARD;
+  cx.save();
+  const g=cx.createLinearGradient(B.x,B.y,B.x+B.w,B.y+B.h); g.addColorStop(0,"#2c2f2b"); g.addColorStop(1,"#232522");
+  cx.fillStyle=g; cx.fillRect(B.x,B.y,B.w,B.h);
+  cx.fillStyle="rgba(255,255,255,0.035)"; for(let k=0;k<5;k++){ cx.beginPath(); cx.ellipse(B.x+12+k*14,B.y+20+((k*37)%60),16,7,0.3,0,7); cx.fill(); }
+  cx.translate(B.x+B.w/2,B.y+7); cx.rotate(-0.025);
+  cx.globalAlpha=c.a; cx.fillStyle="rgba(246,242,232,0.9)"; cx.textAlign="center"; cx.textBaseline="top";
+  let y=0;
+  if(c.title){ cx.font="700 11.5px Caveat, 'Aref Ruqaa', cursive"; wrap(c.title,70,2).forEach(l=>{ cx.fillText(l,0,y); y+=12; }); y+=2; }
+  if(c.text){ cx.font="500 9px Caveat, 'Aref Ruqaa', cursive"; wrap(c.text,70,c.title?4:6).forEach(l=>{ cx.fillText(l,0,y); y+=9.5; }); }
+  if(c.name){ cx.font="700 9.5px Caveat, 'Aref Ruqaa', cursive"; cx.fillText("— "+c.name, 0, Math.max(y+3, B.h-20)); }
+  cx.restore();
+}
+let last=performance.now(), T=0;
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; T+=reduce?dt*0.3:dt;
+  requestAnimationFrame(frame);
+  if(!ready) return;
+  const w = 0.7+0.3*Math.sin(T*0.31)+0.18*Math.sin(T*0.83);
+  cx.setTransform(1,0,0,1,0,0); cx.clearRect(0,0,cv.width,cv.height);
+  cx.setTransform(S,0,0,S,OX,OY);
+  cx.drawImage(photo,0,0,PW,PH);
+  sea(T);
+  drawBirds(T,dt);
+  SWAY.forEach(r=>sway(r,T,w));
+  flag(T,w);
+  lamps(T);
+  coffeeSteam(T,dt);
+  drawBoard(T);
+  if(!reduce) wind(T,dt,w);
+}
+function toScene(e){ const r=cv.getBoundingClientRect(); return [((e.clientX-r.left)*DPR-OX)/S, ((e.clientY-r.top)*DPR-OY)/S]; }
+const onRadio=([x,y])=>x>138&&x<342&&y>108&&y<232;
+const onBoard=([x,y])=>x>638&&x<736&&y>306&&y<428;
+cv.addEventListener("click",e=>{ const p=toScene(e); if(onRadio(p)) setPower(!playing); else if(onBoard(p)) openBook(); });
+cv.addEventListener("pointermove",e=>{ const p=toScene(e); cv.style.cursor=(onRadio(p)||onBoard(p))?"pointer":"default"; });
+window.addEventListener("resize",resize); resize();
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
