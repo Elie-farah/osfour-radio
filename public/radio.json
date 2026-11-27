@@ -1,4 +1,19 @@
 {
-  "note": "The radio plays these YouTube videos in order, then starts again. Change this list and every open page follows within a minute.",
-  "list": ["Ifqvh_OKq3A", "JcrDpYQ1bZY", "ZHiw3HXVPFE", "wYqNvF4zBRw"]
+  "note": "Every 2 hours (Beirut time) the radio swaps between Fairuz and Umm Kulthum. Everyone hears the same song at the same moment. Add videos as {id, dur} with dur in seconds.",
+  "blockHours": 2,
+  "order": ["kulthum", "fairuz"],
+  "fairuz": [
+    {"id": "L59MxhvHxbI", "dur": 16951},
+    {"id": "NVwyd2vWERs", "dur": 10519},
+    {"id": "KV2SV7yJ3ow", "dur": 9633},
+    {"id": "ZHiw3HXVPFE", "dur": 2718},
+    {"id": "1U6aw2jrv3E", "dur": 8375},
+    {"id": "2HE1IOAfYwY", "dur": 7201}
+  ],
+  "kulthum": [
+    {"id": "Ifqvh_OKq3A", "dur": 19625},
+    {"id": "JcrDpYQ1bZY", "dur": 13561},
+    {"id": "0U9DAYDA58s", "dur": 3061},
+    {"id": "wYqNvF4zBRw", "dur": 35785}
+  ]
 }
