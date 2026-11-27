@@ -276,8 +276,6 @@ footer .ar{font-family:var(--arabic)}
 <section class="scene" aria-label="A Lebanese village café terrace at sunset with an old radio, overlooking the sea">
   <canvas id="sky"></canvas>
   <div class="scene-ui">
-    <div class="hints"><div class="hint" id="hint">Tap the <b>old radio</b> to listen</div>
-    <button class="hint book-hint" id="bookBtn">Tap the <b>chalkboard</b> to read and write in our notebook</button></div>
   </div>
 </section>
 
@@ -426,17 +424,30 @@ function playNow(){
 audio.addEventListener("ended",()=>{ if(playing) playNow(); });
 function setPower(on){
   playing=on;
-  if(on){ if(!trackNow()){ playing=false; $("hint").innerHTML="The songs are listed below. <b>Music on the radio is coming soon</b>"; updateNow(); return; } playNow(); }
-  else { audio.pause(); }
+  if(on){ if(trackNow()){ yt.pause(); playNow(); } else { yt.play(); } }
+  else { audio.pause(); yt.pause(); }
   $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
   $("onair").classList.toggle("on",playing); $("onairTxt").textContent=playing?"On air":"Off air";
-  $("hint").innerHTML = playing ? "Listening to <b>Osfour</b>. Tap the radio again to switch off" : "Tap the <b>old radio</b> to listen";
 }
+/* Until Osfour's own MP3s are added, the old radio plays a Fairuz piano set through YouTube's official player. */
+const YT_VIDEO="ZHiw3HXVPFE";
+const yt=(()=>{ let player=null, ready=false, want=false;
+  const box=document.createElement("div"); box.id="ytBox"; box.style.cssText="position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;pointer-events:none;overflow:hidden";
+  const slot=document.createElement("div"); slot.id="ytPlayer"; box.appendChild(slot); document.body.appendChild(box);
+  window.onYouTubeIframeAPIReady=()=>{ player=new YT.Player("ytPlayer",{width:200,height:120,videoId:YT_VIDEO,
+    playerVars:{autoplay:0,controls:0,loop:1,playlist:YT_VIDEO,playsinline:1,rel:0},
+    events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*100)); if(want) player.playVideo(); },
+            onStateChange:e=>{ if(e.data===0&&want) player.playVideo(); }}}); };
+  const tag=document.createElement("script"); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
+  return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*100)); player.playVideo(); } },
+           pause(){ want=false; if(ready) player.pauseVideo(); },
+           vol(v){ if(ready) player.setVolume(Math.round(v*100)); } };
+})();
 let lastSlot=slotNow();
 setInterval(()=>{ const s2=slotNow(); if(s2!==lastSlot){ lastSlot=s2; if(playing) playNow(); } },20000);
-window.addEventListener("pagehide",()=>{ playing=false; audio.pause(); });
+window.addEventListener("pagehide",()=>{ playing=false; audio.pause(); yt.pause(); });
 $("power").addEventListener("click",()=>setPower(!playing));
-$("vol").addEventListener("input",()=>{ volume=$("vol").value/100; audio.volume=volume; });
+$("vol").addEventListener("input",()=>{ volume=$("vol").value/100; audio.volume=volume; yt.vol(volume); });
 
 function updateNow(){
   const slot=slotNow(), list=listFor(slot), label=slot==="morning"?"Morning playlist":"Night playlist";
@@ -539,7 +550,7 @@ function openBook(){
   setTimeout(()=>$("nbName").value ? $("nbText").focus() : $("nbName").focus(),50);
 }
 function closeBook(){ $("book").hidden=true; }
-$("bookBtn").addEventListener("click",openBook);
+
 $("bookClose").addEventListener("click",closeBook);
 $("book").addEventListener("click",e=>{ if(e.target.id==="book") closeBook(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("book").hidden) closeBook(); });
