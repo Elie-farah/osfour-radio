@@ -429,28 +429,40 @@ function setPower(on){
   $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
   $("onair").classList.toggle("on",playing); $("onairTxt").textContent=playing?"On air":"Off air";
 }
-/* Until Osfour's own MP3s are added, the old radio plays Umm Kulthum and a Fairuz piano album, one after the other, through YouTube's official player. */
-const YT_LIST=["JcrDpYQ1bZY","ZHiw3HXVPFE"];   // Umm Kulthum first, then the Fairuz piano album, then again
-let ytIdx=0;
-const yt=(()=>{ let player=null, ready=false, want=false;
+/* Until Osfour's own MP3s are added, the old radio plays Fairuz and Umm Kulthum through YouTube's official player.
+   Every 2 hours (Beirut time) it swaps between them, and it runs on the clock, so whenever anyone opens the radio
+   they hear the same song at the same moment, like a real station. The lists live in radio.json. */
+let RADIO={blockHours:2, order:["kulthum","fairuz"],
+  fairuz:[{id:"L59MxhvHxbI",dur:16951},{id:"NVwyd2vWERs",dur:10519},{id:"KV2SV7yJ3ow",dur:9633},{id:"ZHiw3HXVPFE",dur:2718},{id:"1U6aw2jrv3E",dur:8375},{id:"2HE1IOAfYwY",dur:7201}],
+  kulthum:[{id:"Ifqvh_OKq3A",dur:19625},{id:"JcrDpYQ1bZY",dur:13561},{id:"0U9DAYDA58s",dur:3061},{id:"wYqNvF4zBRw",dur:35785}]};
+function beirutSeconds(){ const now=new Date(); const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Beirut",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(now).reduce((o,x)=>(o[x.type]=x.value,o),{});
+  return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second)/1000; }
+function radioNow(){   // which artist, which video and where in it, right now
+  const B=Math.max(0.5,+RADIO.blockHours||2)*3600, s=beirutSeconds(), blk=Math.floor(s/B), off=s-blk*B;
+  const order=RADIO.order&&RADIO.order.length?RADIO.order:["fairuz","kulthum"], who=order[blk%order.length];
+  const pool=(RADIO[who]||[]).filter(v=>/^[\w-]{11}$/.test(v.id)&&v.dur>60); if(!pool.length) return null;
+  const total=pool.reduce((a,v)=>a+v.dur,0);
+  let pos=(Math.floor(blk/order.length)*B+off)%total;            // each time an artist comes back, it continues where it left off
+  for(const v of pool){ if(pos<v.dur-5) return {who,id:v.id,start:Math.floor(pos),blk}; pos-=v.dur; }
+  return {who,id:pool[0].id,start:0,blk};
+}
+const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
   const box=document.createElement("div"); box.id="ytBox"; box.style.cssText="position:fixed;width:220px;height:220px;left:0;bottom:0;opacity:0.01;pointer-events:none;z-index:-1;overflow:hidden";
   const slot=document.createElement("div"); slot.id="ytPlayer"; box.appendChild(slot); document.body.appendChild(box);
-  window.onYouTubeIframeAPIReady=()=>{ player=new YT.Player("ytPlayer",{width:220,height:220,videoId:YT_LIST[0],
+  function tune(){ const n=radioNow(); if(!n||!ready) return; cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start}); }
+  window.onYouTubeIframeAPIReady=()=>{ const n=radioNow(); player=new YT.Player("ytPlayer",{width:220,height:220,videoId:n?n.id:"ZHiw3HXVPFE",
     playerVars:{autoplay:0,controls:0,playsinline:1,rel:0},
-    events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*100)); if(want) player.playVideo(); },
-            onStateChange:e=>{ if(!want) return; if(e.data===0){ nextVideo(); } else if(e.data===2||e.data===5) setTimeout(()=>{ if(want) player.playVideo(); },300); },
-            onError:()=>{ if(want) setTimeout(nextVideo,2000); }}}); };
-  function nextVideo(){ ytIdx=(ytIdx+1)%YT_LIST.length; player.loadVideoById(YT_LIST[ytIdx]); }
-  // keep the music going: if anything pauses it while the radio is on, start it again
-  setInterval(()=>{ if(!want||!ready) return; const st=player.getPlayerState(); if(st===0){ nextVideo(); } else if(st===2||st===5||st===-1){ player.playVideo(); } if(player.isMuted()) player.unMute(); },4000);
+    events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*100)); if(want) tune(); },
+            onStateChange:e=>{ if(!want) return; if(e.data===0){ tune(); } else if(e.data===2||e.data===5) setTimeout(()=>{ if(want) player.playVideo(); },300); },
+            onError:()=>{ if(want) setTimeout(()=>{ const n=radioNow(); if(n){ cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start+30}); } },2000); }}}); };
+  // keep the music going, and swap artist when the 2 hours are up
+  setInterval(()=>{ if(!want||!ready) return; const n=radioNow(); if(n&&cur&&n.blk!==cur.blk){ tune(); return; }
+    const st=player.getPlayerState(); if(st===0){ tune(); } else if(st===2||st===5||st===-1){ player.playVideo(); } if(player.isMuted()) player.unMute(); },4000);
   const tag=document.createElement("script"); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
-  // the station's music list lives in radio.json, so every open page follows changes without a refresh
   async function syncList(){ try{ const d=await fetch("radio.json?n="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null);
-      const L=(d&&Array.isArray(d.list))? d.list.filter(x=>/^[\w-]{11}$/.test(x)) : [];
-      if(L.length && L.join()!==YT_LIST.join()){ YT_LIST.length=0; L.forEach(x=>YT_LIST.push(x)); ytIdx=0; if(ready){ if(want) player.loadVideoById(YT_LIST[0]); else player.cueVideoById(YT_LIST[0]); } }
-    }catch(e){} }
+      if(d&&(Array.isArray(d.fairuz)||Array.isArray(d.kulthum))){ const was=JSON.stringify(RADIO); RADIO=d; if(was!==JSON.stringify(RADIO)&&want&&ready) tune(); } }catch(e){} }
   syncList(); setInterval(syncList,60000);
-  return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*100)); player.playVideo(); } },
+  return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*100)); tune(); } },
            pause(){ want=false; if(ready) player.pauseVideo(); },
            vol(v){ if(ready) player.setVolume(Math.round(v*100)); } };
 })();
