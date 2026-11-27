@@ -716,6 +716,90 @@ function drawBoard(t){
   cx.restore();
   cx.restore();
 }
+/* ---------- little sparrows (osfour) that visit the café, look for crumbs and rest a while ---------- */
+const PERCH=[
+  {x:574,y:283,s:2.35,floor:true},   // on our table, near the pastry
+  {x:520,y:289,s:2.35,floor:true},   // on our table, beside the glass
+  {x:628,y:195,s:1.9},               // on the top of the chair back, right
+  {x:150,y:212,s:2.1},               // on the top of the chair back, left
+  {x:300,y:226,s:1.6},               // on the stone ledge by the radio
+  {x:742,y:200,s:0.9,floor:true},    // on the far table
+  {x:690,y:182,s:0.95}               // on the far chair
+];
+const sparrows=[0,1,2,3].map(i=>({st:"away",wait:3+i*5+Math.random()*6,p:null,x:0,y:0,s:1,dir:1,t:0,fly:0,peck:0,look:0,hop:0,ph:Math.random()*9,
+  from:null,to:null,dur:1,dur2:0}));
+function freePerch(){ const used=new Set(sparrows.map(b=>b.p).filter(p=>p!==null)); const free=PERCH.map((p,i)=>i).filter(i=>!used.has(i)); return free.length? free[Math.floor(Math.random()*free.length)] : null; }
+function updSparrow(b,dt){
+  b.t+=dt; b.ph+=dt;
+  if(b.st==="away"){ b.wait-=dt; if(b.wait<=0){ const i=freePerch(); if(i===null){ b.wait=4; return; }
+      const P=PERCH[i]; b.p=i; b.st="in"; b.t=0; b.dur=2.2+Math.random()*1.2;
+      const side=Math.random()<0.5?-1:1; b.from={x:P.x+side*(380+Math.random()*200), y:P.y-150-Math.random()*120, s:P.s*0.7}; b.to={x:P.x,y:P.y,s:P.s}; b.dir= side>0?1:-1; }
+    return; }
+  if(b.st==="in"||b.st==="out"){ const k=Math.min(1,b.t/b.dur), e=b.st==="in"? 1-Math.pow(1-k,2.2) : k*k;
+    b.x=b.from.x+(b.to.x-b.from.x)*e; b.y=b.from.y+(b.to.y-b.from.y)*e - Math.sin(k*Math.PI)*30*(b.st==="in"?1:0.6); b.s=b.from.s+(b.to.s-b.from.s)*e;
+    if(k>=1){ if(b.st==="in"){ b.st="sit"; b.t=0; b.stay=12+Math.random()*26; b.next=0.6; } else { b.st="away"; b.p=null; b.wait=6+Math.random()*16; } }
+    return; }
+  // sitting: peck for crumbs, look around, hop a little, flick the tail, then fly away
+  const P=PERCH[b.p]; b.next-=dt;
+  b.peck=Math.max(0,b.peck-dt); b.hop=Math.max(0,b.hop-dt);
+  if(b.next<=0){ const r=Math.random();
+    if(P.floor && r<0.45){ b.peck=0.45; }
+    else if(r<0.7){ b.dir*=-1; }
+    else if(r<0.85){ b.hop=0.35; b.hx=(Math.random()-0.5)*8*P.s; }
+    b.next=0.5+Math.random()*1.6; }
+  const hk=b.hop>0? Math.sin((1-b.hop/0.35)*Math.PI):0;
+  if(b.hop>0) b.x=P.x+(b.hx||0)*(1-b.hop/0.35); 
+  b.y=P.y-hk*5*P.s; b.s=P.s;
+  if(b.t>b.stay){ b.st="out"; b.t=0; b.dur=1.8; const side=Math.random()<0.5?-1:1; b.dir=side>0?1:-1;
+    b.from={x:b.x,y:b.y,s:b.s}; b.to={x:b.x+side*(420+Math.random()*200), y:b.y-200-Math.random()*80, s:b.s*0.6}; }
+}
+function drawSparrow(b){
+  const flying=b.st==="in"||b.st==="out", s=b.s/1.0;
+  cx.save(); cx.translate(b.x,b.y); cx.filter="blur("+(0.35+0.12*b.s).toFixed(2)+"px) sepia(.18) saturate(.9)";
+  if(!flying && PERCH[b.p].floor){ cx.fillStyle="rgba(30,18,10,.28)"; cx.beginPath(); cx.ellipse(0,0.6*s,7*s,1.3*s,0,0,7); cx.fill(); }
+  cx.scale(s*b.dir*-1,s);   // drawn facing left; dir 1 faces right
+  const peck = b.peck>0 ? Math.sin((1-b.peck/0.45)*Math.PI)*0.75 : 0;
+  // body tilts forward while pecking
+  cx.save(); cx.translate(0,-3.2); cx.rotate(-peck*0.55 + (flying?0.12:-0.18)); cx.translate(0,3.2);
+  // tail
+  const flick = Math.sin(b.ph*3.1)>0.97 ? -0.35 : 0;
+  cx.save(); cx.translate(5,-5.2); cx.rotate(0.38+flick);
+  cx.fillStyle="#4e3524"; cx.beginPath(); cx.moveTo(0,-1.2); cx.lineTo(7.4,-0.9); cx.lineTo(7.6,1.1); cx.lineTo(0,1.4); cx.closePath(); cx.fill();
+  cx.restore();
+  // body: warm brown back, pale grey-buff belly
+  const g=cx.createLinearGradient(0,-10.5,0,-1); g.addColorStop(0,"#8a5e3c"); g.addColorStop(0.45,"#a47a55"); g.addColorStop(0.62,"#cdbca6"); g.addColorStop(1,"#e6dccd");
+  cx.fillStyle=g; cx.beginPath(); cx.ellipse(0,-5.6,6.4,4.5,-0.12,0,7); cx.fill();
+  cx.strokeStyle="rgba(255,190,120,.55)"; cx.lineWidth=0.7; cx.beginPath(); cx.ellipse(0,-5.6,6.2,4.3,-0.12,Math.PI*1.15,Math.PI*1.85); cx.stroke();
+  // wing with dark streaks and a pale bar
+  if(!flying){
+    cx.fillStyle="#6f4a2e"; cx.beginPath(); cx.ellipse(1.4,-6.3,5,2.9,-0.08,0,7); cx.fill();
+    cx.strokeStyle="#2e1d12"; cx.lineWidth=0.55;
+    for(let k=0;k<4;k++){ cx.beginPath(); cx.moveTo(-1.5+k*1.6,-7.8+k*0.2); cx.quadraticCurveTo(0.5+k*1.6,-6.4,2+k*1.7,-4.6); cx.stroke(); }
+    cx.strokeStyle="rgba(240,226,200,.85)"; cx.lineWidth=0.5; cx.beginPath(); cx.moveTo(-2.4,-6.6); cx.quadraticCurveTo(0.6,-5.6,3.6,-5.9); cx.stroke();
+  }
+  cx.restore();
+  // head: grey crown, chestnut stripe, pale cheek, black bib; it bends down to peck and turns to look
+  cx.save(); cx.translate(-4.6,-8.4); cx.rotate(-peck*1.15);
+  cx.fillStyle="#d6c6ae"; cx.beginPath(); cx.arc(-0.9,-1.6,3.3,0,7); cx.fill();
+  cx.fillStyle="#857668"; cx.beginPath(); cx.arc(-0.9,-2.3,3.1,Math.PI*1.02,Math.PI*1.98); cx.fill();
+  cx.fillStyle="#8c5233"; cx.beginPath(); cx.moveTo(-0.6,-2.6); cx.quadraticCurveTo(1.8,-3.2,2.6,-1.2); cx.lineTo(1.6,-0.9); cx.quadraticCurveTo(1,-2,-0.6,-2); cx.closePath(); cx.fill();
+  cx.fillStyle="#241712"; cx.beginPath(); cx.moveTo(-3.2,-0.6); cx.quadraticCurveTo(-2.2,1.8,-0.4,1.6); cx.quadraticCurveTo(-1.2,0.2,-1.6,-0.7); cx.closePath(); cx.fill();
+  cx.fillStyle="#111"; cx.beginPath(); cx.arc(-2.1,-1.9,0.62,0,7); cx.fill();
+  cx.fillStyle="rgba(255,255,255,.8)"; cx.beginPath(); cx.arc(-2.3,-2.1,0.2,0,7); cx.fill();
+  cx.fillStyle="#3a2c22"; cx.beginPath(); cx.moveTo(-3.9,-2.1); cx.lineTo(-6,-1.2); cx.lineTo(-3.9,-0.6); cx.closePath(); cx.fill();
+  cx.restore();
+  if(flying){ // wings beating
+    const f=Math.sin(b.ph*28);
+    cx.fillStyle="#6a452b";
+    cx.beginPath(); cx.moveTo(-2,-7); cx.quadraticCurveTo(2,-9-f*9,7,-9-f*10); cx.quadraticCurveTo(4,-6-f*3,3,-5.5); cx.closePath(); cx.fill();
+    cx.fillStyle="#7d5436";
+    cx.beginPath(); cx.moveTo(-1,-6.5); cx.quadraticCurveTo(3,-8+f*8,8,-7+f*9); cx.quadraticCurveTo(4,-5+f*2,3,-5); cx.closePath(); cx.fill();
+  } else { // little legs
+    cx.strokeStyle="#5b4636"; cx.lineWidth=0.6; cx.beginPath(); cx.moveTo(-0.8,-1.6); cx.lineTo(-1.3,0); cx.moveTo(1,-1.6); cx.lineTo(0.8,0); cx.stroke();
+  }
+  cx.restore();
+}
+function sparrowsFrame(dt){ sparrows.forEach(b=>{ updSparrow(b,dt); if(b.st!=="away") drawSparrow(b); }); }
 let last=performance.now(), T=0;
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000); last=now; T+=reduce?dt*0.3:dt;
@@ -732,6 +816,7 @@ function frame(now){
   lamps(T);
   coffeeSteam(T,dt);
   drawBoard(T);
+  sparrowsFrame(reduce?dt*0.5:dt);
   if(!reduce) wind(T,dt,w);
 }
 function toScene(e){ const r=cv.getBoundingClientRect(); return [((e.clientX-r.left)*DPR-OX)/S, ((e.clientY-r.top)*DPR-OY)/S]; }
