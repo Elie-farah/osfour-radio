@@ -676,7 +676,7 @@ function wind(t,dt,w){ motes.forEach(m=>{ m.x+=m.v*dt*w*(m.leaf?2.2:1); m.y+=Mat
   else { cx.fillStyle=`rgba(255,226,170,${0.25+0.2*Math.sin(t*2+m.r)})`; cx.beginPath(); cx.arc(m.x,m.y,0.7*m.s,0,7); cx.fill(); } }); }
 
 // the chalkboard shows what visitors write, in chalk
-const BOARD={x:650,y:319,w:78,h:100};
+const BOARD={x:612,y:258,w:160,h:186};
 function boardContent(t){
   if(!$("book").hidden){ const n=$("nbName").value.trim(), ti=$("nbTitle").value.trim(), tx=$("nbText").value.trim();
     if(n||ti||tx) return {title:ti, text:tx, name:n, a:1}; }
@@ -693,17 +693,27 @@ function wrap(text,maxW,maxLines){
 }
 function drawBoard(t){
   const c=boardContent(t); if(!c) return;
-  const B=BOARD;
+  const B=BOARD, F=7;
   cx.save();
-  const g=cx.createLinearGradient(B.x,B.y,B.x+B.w,B.y+B.h); g.addColorStop(0,"#2c2f2b"); g.addColorStop(1,"#232522");
+  // soft shadow and a wooden frame, standing straight on the chair
+  cx.shadowColor="rgba(0,0,0,.45)"; cx.shadowBlur=10; cx.shadowOffsetY=4;
+  const wood=cx.createLinearGradient(B.x,B.y,B.x+B.w,B.y+B.h); wood.addColorStop(0,"#7a5232"); wood.addColorStop(0.5,"#5d3c22"); wood.addColorStop(1,"#4a2f1a");
+  cx.fillStyle=wood; cx.fillRect(B.x-F,B.y-F,B.w+2*F,B.h+2*F);
+  cx.shadowColor="transparent";
+  cx.strokeStyle="rgba(255,220,170,.18)"; cx.lineWidth=1; cx.strokeRect(B.x-F+0.5,B.y-F+0.5,B.w+2*F-1,B.h+2*F-1);
+  const g=cx.createLinearGradient(B.x,B.y,B.x+B.w,B.y+B.h); g.addColorStop(0,"#2f332e"); g.addColorStop(1,"#222521");
   cx.fillStyle=g; cx.fillRect(B.x,B.y,B.w,B.h);
-  cx.fillStyle="rgba(255,255,255,0.035)"; for(let k=0;k<5;k++){ cx.beginPath(); cx.ellipse(B.x+12+k*14,B.y+20+((k*37)%60),16,7,0.3,0,7); cx.fill(); }
-  cx.translate(B.x+B.w/2,B.y+7); cx.rotate(-0.025);
-  cx.globalAlpha=c.a; cx.fillStyle="rgba(246,242,232,0.9)"; cx.textAlign="center"; cx.textBaseline="top";
-  let y=0;
-  if(c.title){ cx.font="700 11.5px Caveat, 'Aref Ruqaa', cursive"; wrap(c.title,70,2).forEach(l=>{ cx.fillText(l,0,y); y+=12; }); y+=2; }
-  if(c.text){ cx.font="500 9px Caveat, 'Aref Ruqaa', cursive"; wrap(c.text,70,c.title?4:6).forEach(l=>{ cx.fillText(l,0,y); y+=9.5; }); }
-  if(c.name){ cx.font="700 9.5px Caveat, 'Aref Ruqaa', cursive"; cx.fillText("— "+c.name, 0, Math.max(y+3, B.h-20)); }
+  cx.fillStyle="rgba(255,255,255,0.03)"; for(let k=0;k<7;k++){ cx.beginPath(); cx.ellipse(B.x+20+k*20,B.y+30+((k*53)%120),26,10,0.3,0,7); cx.fill(); }
+  // the writing: straight, large and easy to read
+  cx.save(); cx.beginPath(); cx.rect(B.x+4,B.y+4,B.w-8,B.h-8); cx.clip();
+  cx.translate(B.x+B.w/2,B.y+14);
+  cx.globalAlpha=c.a; cx.fillStyle="rgba(248,245,236,0.95)"; cx.textAlign="center"; cx.textBaseline="top";
+  cx.shadowColor="rgba(255,255,255,.25)"; cx.shadowBlur=1.5;
+  const MW=B.w-22; let y=0;
+  if(c.title){ cx.font="700 24px Caveat, 'Aref Ruqaa', cursive"; wrap(c.title,MW,2).forEach(l=>{ cx.fillText(l,0,y); y+=26; }); y+=6; }
+  if(c.text){ cx.font="500 19px Caveat, 'Aref Ruqaa', cursive"; wrap(c.text,MW,c.title?5:7).forEach(l=>{ cx.fillText(l,0,y); y+=20.5; }); }
+  if(c.name){ cx.font="700 18px Caveat, 'Aref Ruqaa', cursive"; cx.fillText("— "+c.name, 0, Math.max(y+8, B.h-40)); }
+  cx.restore();
   cx.restore();
 }
 let last=performance.now(), T=0;
@@ -726,7 +736,7 @@ function frame(now){
 }
 function toScene(e){ const r=cv.getBoundingClientRect(); return [((e.clientX-r.left)*DPR-OX)/S, ((e.clientY-r.top)*DPR-OY)/S]; }
 const onRadio=([x,y])=>x>138&&x<342&&y>108&&y<232;
-const onBoard=([x,y])=>x>638&&x<736&&y>306&&y<428;
+const onBoard=([x,y])=>x>BOARD.x-8&&x<BOARD.x+BOARD.w+8&&y>BOARD.y-8&&y<BOARD.y+BOARD.h+8;
 cv.addEventListener("click",e=>{ const p=toScene(e); if(onRadio(p)) setPower(!playing); else if(onBoard(p)) openBook(); });
 cv.addEventListener("pointermove",e=>{ const p=toScene(e); cv.style.cursor=(onRadio(p)||onBoard(p))?"pointer":"default"; });
 window.addEventListener("resize",resize); resize();
