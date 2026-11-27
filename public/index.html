@@ -425,7 +425,7 @@ audio.addEventListener("ended",()=>{ if(playing) playNow(); });
 function setPower(on){
   playing=on;
   if(on){ if(trackNow()){ yt.pause(); playNow(); } else { yt.play(); } }
-  else { audio.pause(); yt.pause(); }
+  else { audio.pause(); yt.pause(); if(pendingReload) setTimeout(()=>location.reload(),400); }
   $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
   $("onair").classList.toggle("on",playing); $("onairTxt").textContent=playing?"On air":"Off air";
 }
@@ -444,10 +444,22 @@ const yt=(()=>{ let player=null, ready=false, want=false;
   // keep the music going: if anything pauses it while the radio is on, start it again
   setInterval(()=>{ if(!want||!ready) return; const st=player.getPlayerState(); if(st===0){ nextVideo(); } else if(st===2||st===5||st===-1){ player.playVideo(); } if(player.isMuted()) player.unMute(); },4000);
   const tag=document.createElement("script"); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
+  // the station's music list lives in radio.json, so every open page follows changes without a refresh
+  async function syncList(){ try{ const d=await fetch("radio.json?n="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null);
+      const L=(d&&Array.isArray(d.list))? d.list.filter(x=>/^[\w-]{11}$/.test(x)) : [];
+      if(L.length && L.join()!==YT_LIST.join()){ YT_LIST.length=0; L.forEach(x=>YT_LIST.push(x)); ytIdx=0; if(ready){ if(want) player.loadVideoById(YT_LIST[0]); else player.cueVideoById(YT_LIST[0]); } }
+    }catch(e){} }
+  syncList(); setInterval(syncList,60000);
   return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*100)); player.playVideo(); } },
            pause(){ want=false; if(ready) player.pauseVideo(); },
            vol(v){ if(ready) player.setVolume(Math.round(v*100)); } };
 })();
+// when the site is updated, open pages pick up the new version by themselves (only while the radio is off, so music is never cut)
+(()=>{ let base=null; async function sig(){ try{ const h=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()); let x=0; for(let i=0;i<h.length;i++) x=(x*31+h.charCodeAt(i))|0; return x; }catch(e){ return null; } }
+  sig().then(v=>base=v);
+  setInterval(async()=>{ const v=await sig(); if(v===null||base===null) return; if(v!==base){ if(!playing && $("book").hidden) location.reload(); else pendingReload=true; } },120000);
+})();
+let pendingReload=false;
 let lastSlot=slotNow();
 setInterval(()=>{ const s2=slotNow(); if(s2!==lastSlot){ lastSlot=s2; if(playing) playNow(); } },20000);
 window.addEventListener("pagehide",()=>{ playing=false; audio.pause(); yt.pause(); });
