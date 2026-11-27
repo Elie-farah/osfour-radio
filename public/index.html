@@ -735,7 +735,7 @@ const CYCLE=360;   // seconds for one full turn: bright, getting dark, evening, 
 const TOWN=Array.from({length:70},(_,i)=>({x:380+((i*137.5)%480), y:128+((i*53.3)%70)+(i%7)*1.5, p:i*1.7, r:0.6+(i%3)*0.35}))
   .filter(l=>!(l.x>560&&l.x<700&&l.y>170));                     // windows lighting up across the village and the hills
 const STARS=Array.from({length:40},(_,i)=>({x:(i*97.3)%972, y:6+((i*41.7)%70), p:i*2.3}));
-function darkness(t){ const k=(t%CYCLE)/CYCLE; const e=x=>x*x*(3-2*x);
+function darkness(t){ const k=((t+CYCLE*0.6)%CYCLE)/CYCLE;   // pages open in the evening light, then it brightens and turns again const e=x=>x*x*(3-2*x);
   if(k<0.33) return 0; if(k<0.5) return e((k-0.33)/0.17); if(k<0.83) return 1; return 1-e((k-0.83)/0.17); }
 function evening(t){
   const d=darkness(t)*0.78; if(d<0.01) return;
