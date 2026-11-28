@@ -59,6 +59,11 @@ export default async (req) => {
   const store = getStore({ name: "osfour-requests", consistency: "strong" });
   const now = Date.now();
   let q = live((await store.get("queue", { type: "json" })) || [], now);
+  if (req.method === "GET" && isHost(req) && new URL(req.url).searchParams.get("diag")) {   // host-only check of the song search
+    const u = "https://www.youtube.com/results?search_query=" + encodeURIComponent(new URL(req.url).searchParams.get("diag"));
+    const r = await fetch(u, { headers: YT_HEADERS }); const t = await r.text();
+    return Response.json({ status: r.status, url: r.url, len: t.length, init: /ytInitialData/.test(t), vids: (t.match(/"videoId":"/g) || []).length, found: parseResults(t).slice(0, 3), head: t.slice(0, 300).replace(/<[^>]+>/g, " ") }, { headers: nc });
+  }
   if (req.method === "GET") return Response.json({ queue: pub(q), now }, { headers: nc });
 
   if (req.method === "DELETE") {
