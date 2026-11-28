@@ -3,8 +3,8 @@ import { createHash } from "node:crypto";
 
 // Tells listeners whether Osfour is live right now, and how to reach the host's microphone.
 // Only the host can go live. The host key itself is never stored here, only its fingerprint.
-const HOST_HASH = "4214e3afcef5a099e5a5d32120d615e662a7d4b165382276fe00f633b86f562d";
-const isHost = req => { const k = req.headers.get("x-host-key") || ""; return !!k && createHash("sha256").update(k).digest("hex") === HOST_HASH; };
+const HOST_HASHES = ["4214e3afcef5a099e5a5d32120d615e662a7d4b165382276fe00f633b86f562d", "66cb755f9689b69840f709f129938c1873f86836af317c4ac54d258c2ad0e949"];   // the password, and the earlier host link
+const isHost = req => { const k = req.headers.get("x-host-key") || ""; return !!k && HOST_HASHES.includes(createHash("sha256").update(k).digest("hex")); };
 const FRESH = 45000;   // the host's page checks in every 15 seconds; if it stops, the live ends by itself
 
 export default async (req) => {
@@ -17,9 +17,9 @@ export default async (req) => {
   if (req.method === "POST") {
     // slow down password guessing: after 8 wrong tries from one address, wait 15 minutes
     const ip = (req.headers.get("x-nf-client-connection-ip") || req.headers.get("x-forwarded-for") || "x").split(",")[0].trim();
-    const fk = "fail-" + createHash("sha256").update(ip).digest("hex").slice(0, 16);
+    const fk = "fail2-" + createHash("sha256").update(ip).digest("hex").slice(0, 16);
     const f = (await store.get(fk, { type: "json" })) || { n: 0, t: 0 };
-    if (f.n >= 8 && Date.now() - f.t < 15 * 60000) return new Response("Too many tries, wait a little", { status: 429 });
+    if (f.n >= 12 && Date.now() - f.t < 15 * 60000) return new Response("Too many tries, wait a little", { status: 429 });
     if (!isHost(req)) { await store.setJSON(fk, { n: (Date.now() - f.t < 15 * 60000 ? f.n : 0) + 1, t: Date.now() }); await new Promise(r => setTimeout(r, 800)); return new Response("Host only", { status: 403 }); }
     if (f.n) await store.delete(fk);
     let b; try { b = await req.json(); } catch { return new Response("Bad request", { status: 400 }); }
