@@ -483,6 +483,9 @@ function setPower(on){
 /* Until Osfour's own MP3s are added, the old radio plays Fairuz and Umm Kulthum through YouTube's official player.
    Every 2 hours (Beirut time) it swaps between them, and it runs on the clock, so whenever anyone opens the radio
    they hear the same song at the same moment, like a real station. The lists live in radio.json. */
+async function iceServers(){   // relay servers so the voice crosses any network, not only the same Wi-Fi
+  try{ const d=await Promise.race([fetch("/api/turn",{cache:"no-store"}).then(r=>r.json()),new Promise(z=>setTimeout(()=>z(null),4000))]); if(d&&d.iceServers&&d.iceServers.length) return d.iceServers; }catch(e){}
+  return [{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]; }
 let duckK=1;   // music volume is lowered while Osfour talks live
 let RADIO={blockHours:2, order:["kulthum","fairuz"],
   fairuz:[{id:"L59MxhvHxbI",dur:16951},{id:"NVwyd2vWERs",dur:10519},{id:"KV2SV7yJ3ow",dur:9633},{id:"ZHiw3HXVPFE",dur:2718},{id:"1U6aw2jrv3E",dur:8375},{id:"2HE1IOAfYwY",dur:7201}],
@@ -549,7 +552,7 @@ async function liveJoin(hostId){
   try{ await loadPeer(); }catch(e){ return; }
   if(!liveAudio){ liveAudio=new Audio(); liveAudio.autoplay=true; liveAudio.playsInline=true; }
   liveAudio.play().catch(()=>{});   // unlock playback while we still have the listener's tap
-  const p=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}}); livePeer=p;
+  const p=new Peer({config:{iceServers:await iceServers()}}); livePeer=p;
   p.on("open",()=>{ const c=p.connect(hostId,{reliable:true}); c.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
   p.on("call",call=>{ call.answer(undefined,{sdpTransform:hiFi}); call.on("stream",st=>{ liveAudio.srcObject=st; liveAudio.volume=1; liveAudio.play().catch(()=>{}); duck(true,st); });
     call.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
@@ -607,7 +610,7 @@ liveCheck(); setInterval(liveCheck,8000);
     catch(e){ $("hostStatus").textContent="The microphone wasn't allowed. Allow it in the browser and try again."; return; }
     out=await studioSafe(mic);
     try{ await loadPeer(); }catch(e){ $("hostStatus").textContent="Couldn't start. Check the internet and try again."; return; }
-    peer=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}});
+    peer=new Peer({config:{iceServers:await iceServers()}});
     peer.on("open",async()=>{ hostLive=true; await tell(true); liveOn=true; beat=setInterval(()=>tell(true),15000); ui(); });
     peer.on("connection",conn=>{ conn.on("open",()=>{ const call=peer.call(conn.peer,out,{sdpTransform:hiFi}); calls.set(conn.peer,call);
         call.on("close",()=>{ calls.delete(conn.peer); count(); }); call.on("error",()=>{ calls.delete(conn.peer); count(); }); setTimeout(count,1500); });
