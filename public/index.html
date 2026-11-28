@@ -208,15 +208,6 @@ footer .ar{font-family:var(--arabic)}
 .liveBadge[hidden]{display:none}
 .hostBox{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(10,6,3,.55);line-height:1.4;padding:16px}
 .hostBox[hidden]{display:none}
-.reqCard{width:min(420px,100%)}
-.reqCard h3{font-family:"Aref Ruqaa","Alegreya Sans",serif}
-.reqList{list-style:none;margin:12px 0 0;padding:0;text-align:left;max-height:40vh;overflow:auto}
-.reqList li{display:flex;gap:8px;align-items:center;padding:7px 4px;border-top:1px solid var(--line);font-size:.92rem}
-.reqList li .t{flex:1;min-width:0}
-.reqList li .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.reqList li .t small{color:var(--muted)}
-.reqList li.now b{color:#ffcf6b}
-.reqList button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:3px 8px;cursor:pointer}
 .hostCard{width:min(380px,100%);background:#22170f;border:1px solid var(--line);border-radius:18px;padding:22px 20px;text-align:center;color:var(--cream);position:relative}
 .hostCard h3{margin:0 0 4px;font:700 1.2rem "Alegreya Sans",sans-serif}
 .hostCard p{margin:6px 0;color:var(--muted);font-size:.95rem}
@@ -317,18 +308,6 @@ footer .ar{font-family:var(--arabic)}
 </section>
 
 
-<div class="hostBox" id="reqBox" hidden role="dialog" aria-modal="true" aria-labelledby="reqTitle">
-  <div class="hostCard reqCard">
-    <button class="x" id="reqX" aria-label="Close">×</button>
-    <h3 id="reqTitle">اطلب أغنيتك · Ask for a song</h3>
-    <p>Write the song and the singer. It plays on the radio for everyone, in turn.</p>
-    <input id="reqSong" maxlength="100" placeholder="Song and singer, e.g. Kifak Inta Fairuz" autocomplete="off">
-    <input id="reqName" maxlength="30" placeholder="Your name" autocomplete="nickname">
-    <div class="hostRow"><button id="reqSend">Send my request</button></div>
-    <p id="reqMsg" role="status"></p>
-    <ol class="reqList" id="reqList"></ol>
-  </div>
-</div>
 <div class="hostBox" id="hostBox" hidden role="dialog" aria-modal="true" aria-labelledby="hostTitle">
   <div class="hostCard">
     <button class="x" id="hostX" aria-label="Close">×</button>
@@ -507,13 +486,6 @@ function setPower(on){
 async function iceServers(){   // relay servers so the voice crosses any network, not only the same Wi-Fi
   try{ const d=await Promise.race([fetch("/api/turn",{cache:"no-store"}).then(r=>r.json()),new Promise(z=>setTimeout(()=>z(null),4000))]); if(d&&d.iceServers&&d.iceServers.length) return d.iceServers; }catch(e){}
   return [{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]; }
-/* ---------- song requests: the queue everyone hears, in order ---------- */
-let REQQ=[], reqSkew=0, reqLastNow=null;
-const reqNow=()=>Date.now()+reqSkew;
-async function reqSync(){ try{ const j=await fetch("/api/requests",{cache:"no-store"}).then(r=>r.ok?r.json():null); if(j&&Array.isArray(j.queue)){ reqSkew=j.now-Date.now(); reqSet(j.queue); } }catch(e){} }
-function reqSet(q){ REQQ=q.filter(r=>r.start+r.dur*1000>reqNow()); reqList(); }
-function reqPlaying(){ const t=reqNow(); return REQQ.find(r=>t>=r.start&&t<r.start+r.dur*1000-4000)||null; }
-reqSync(); setInterval(reqSync,10000);
 let duckK=1;   // music volume is lowered while Osfour talks live
 let RADIO={blockHours:2, order:["kulthum","fairuz"],
   fairuz:[{id:"L59MxhvHxbI",dur:16951},{id:"NVwyd2vWERs",dur:10519},{id:"KV2SV7yJ3ow",dur:9633},{id:"ZHiw3HXVPFE",dur:2718},{id:"1U6aw2jrv3E",dur:8375},{id:"2HE1IOAfYwY",dur:7201}],
@@ -521,7 +493,6 @@ let RADIO={blockHours:2, order:["kulthum","fairuz"],
 function beirutSeconds(){ const now=new Date(); const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Beirut",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(now).reduce((o,x)=>(o[x.type]=x.value,o),{});
   return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second)/1000; }
 function radioNow(){   // which artist, which video and where in it, right now
-  const rq=reqPlaying(); if(rq) return {who:"request", id:rq.vid, start:Math.floor((reqNow()-rq.start)/1000), blk:"r"+rq.id, req:rq};
   const s=beirutSeconds(); let R=RADIO, tag="", rot=null;
   for(const [i,x] of (RADIO.specials||[]).entries()){ const a=Date.parse(x.from+"Z")/1000, b=Date.parse(x.to+"Z")/1000;   // special hours (Beirut time) with other singers
     if(s>=a&&s<b&&x.order&&x.order.length){ R=x; tag="sp"+i+"-"; break; } }
@@ -541,7 +512,7 @@ function radioNow(){   // which artist, which video and where in it, right now
 const yt=(()=>{ let player=null, ready=false, want=false, cur=null, silent=false, probe=0;
   const box=document.createElement("div"); box.id="ytBox"; box.style.cssText="position:fixed;width:220px;height:220px;left:0;bottom:0;opacity:0.01;pointer-events:none;z-index:-1;overflow:hidden";
   const slot=document.createElement("div"); slot.id="ytPlayer"; box.appendChild(slot); document.body.appendChild(box);
-  function tune(){ const n=radioNow(); if(!n||!ready) return; if(n.req&&(!cur||cur.blk!==n.blk)&&typeof reqToggle==="function"){ reqToggle(true); clearTimeout(reqTimer); reqTimer=setTimeout(()=>reqWant=0,8000); } cur=n; liveSign(); if(n.silent){ player.pauseVideo(); return; } player.loadVideoById({videoId:n.id,startSeconds:n.start}); check(); }
+  function tune(){ const n=radioNow(); if(!n||!ready) return; cur=n; liveSign(); if(n.silent){ player.pauseVideo(); return; } player.loadVideoById({videoId:n.id,startSeconds:n.start}); check(); }
   // browsers may refuse sound before the visitor touches the page: then the music starts silently and the sound comes on at the first touch
   function check(){ clearTimeout(probe); probe=setTimeout(()=>{ if(!want||!ready||silent||(cur&&cur.silent)) return; const st=player.getPlayerState(); if(st!==1&&st!==3){ silent=true; player.mute(); player.playVideo(); } },2500); }
   window.onYouTubeIframeAPIReady=()=>{ const n=radioNow(); player=new YT.Player("ytPlayer",{width:220,height:220,videoId:n&&n.id?n.id:"ZHiw3HXVPFE",
@@ -683,27 +654,6 @@ liveCheck(); setInterval(liveCheck,8000);
     $("hostMute").setAttribute("aria-pressed",String(on)); $("hostMute").textContent=on?"Unmute my mic":"Mute my mic"; $("hostStatus").textContent=on?"● Live, your mic is muted":"● You're live"; };
   window.addEventListener("pagehide",()=>{ if(hostLive) fetch("/api/live",{method:"POST",keepalive:true,headers:{...H,"x-host-key":KEY},body:JSON.stringify({live:false})}); });
 })();
-/* ---------- the song request form ---------- */
-function reqHostKey(){ try{ return localStorage.getItem("osfourHostKey")||""; }catch(e){ return ""; } }
-function reqList(){ const ol=$("reqList"); if(!ol) return; ol.textContent=""; const t=reqNow(), host=reqHostKey();
-  REQQ.forEach(r=>{ const li=document.createElement("li"); const now=t>=r.start; if(now) li.className="now";
-    const d=document.createElement("div"); d.className="t"; const b=document.createElement("b"); b.textContent=r.title; const sm=document.createElement("small");
-    sm.textContent=(now?"♪ playing now":"in about "+Math.max(1,Math.round((r.start-t)/60000))+" min")+" · asked by "+r.name; d.append(b,sm); li.appendChild(d);
-    if(host){ const x=document.createElement("button"); x.textContent="Remove"; x.onclick=async()=>{ x.disabled=true; try{ const j=await fetch("/api/requests?id="+encodeURIComponent(r.id),{method:"DELETE",headers:{"x-host-key":host}}).then(r=>r.ok?r.json():null); if(j){ reqSkew=j.now-Date.now(); reqSet(j.queue); } }catch(e){} x.disabled=false; }; li.appendChild(x); }
-    ol.appendChild(li); }); }
-function openReq(){ $("reqBox").hidden=false; try{ $("reqName").value=$("reqName").value||localStorage.getItem("osfourName")||""; }catch(e){} $("reqMsg").textContent=""; reqList(); setTimeout(()=>$("reqSong").focus(),50); clearTimeout(reqTimer); }
-$("reqX").onclick=()=>{ $("reqBox").hidden=true; reqToggle(true); };
-$("reqBox").addEventListener("click",e=>{ if(e.target===$("reqBox")){ $("reqBox").hidden=true; reqToggle(true); } });
-async function reqSend(){ const song=$("reqSong").value.trim(), name=$("reqName").value.trim(); const m=$("reqMsg");
-  if(!song||!name){ m.textContent="Write the song and your name."; return; }
-  try{ localStorage.setItem("osfourName",name); }catch(e){}
-  $("reqSend").disabled=true; m.textContent="Looking for your song…";
-  try{ const host=reqHostKey(); const r=await fetch("/api/requests",{method:"POST",headers:{"content-type":"application/json",...(host?{"x-host-key":host}:{})},body:JSON.stringify({song,name})}); const j=await r.json().catch(()=>({}));
-    if(r.ok&&j.item){ reqSkew=j.now-Date.now(); reqSet(j.queue); const mins=Math.max(1,Math.round((j.item.start-reqNow())/60000)); m.textContent="Added: "+j.item.title+". It plays in about "+mins+" min."; $("reqSong").value=""; if(!playing) setPower(true); }
-    else m.textContent=j.error||"Something went wrong. Please try again."; }
-  catch(e){ m.textContent="No connection. Please try again."; }
-  $("reqSend").disabled=false; }
-$("reqSend").onclick=reqSend; $("reqSong").addEventListener("keydown",e=>{ if(e.key==="Enter") reqSend(); });
 // the live badge turns the radio on
 $("liveBadge").onclick=()=>{ if(!playing && !hostLive) setPower(true); };
 // when the site is updated, open pages pick up the new version by themselves (only while the radio is off, so music is never cut)
@@ -1014,71 +964,6 @@ function evening(t){
     cx.fillStyle=gl; cx.fillRect(x-R,y-R,2*R,2*R); });
   cx.restore();
 }
-const REQ={x:722,y:22,w:204,h:272};
-let reqP=0, reqWant=0, reqTimer=0;   // 0 = up and hidden, 1 = down and open
-function reqToggle(on){ reqWant=on?1:0; clearTimeout(reqTimer); if(on) reqTimer=setTimeout(()=>reqWant=0,20000); }
-setTimeout(()=>{ reqToggle(true); reqTimer=setTimeout(()=>reqWant=0,5000); },2500);   // shows itself once when the page opens
-const TAG={x:770,y:0,w:108,h:44};
-function drawRequests(t){
-  reqP+=(reqWant-reqP)*0.07; const ease=reqP*reqP*(3-2*reqP);
-  const off=-(REQ.h+70)*(1-ease)+Math.sin(t*3)*1.5*ease*(1-ease)*4;
-  // the ropes and the board slide down from the top
-  cx.save(); cx.translate(0,off);
-  cx.strokeStyle="rgba(200,170,120,.8)"; cx.lineWidth=1.6; cx.beginPath(); cx.moveTo(REQ.x+30,-400); cx.lineTo(REQ.x+30,REQ.y-9); cx.moveTo(REQ.x+REQ.w-30,-400); cx.lineTo(REQ.x+REQ.w-30,REQ.y-9); cx.stroke();
-  drawReqBoard(t); cx.restore();
-  // the wooden tag everyone can see, hanging under the top edge
-  const T=TAG, sw=Math.sin(t*1.3)*0.03*(1-ease);
-  if(ease>0.98) return; cx.save(); cx.globalAlpha=1-ease; cx.translate(T.x+T.w/2,T.y); cx.rotate(sw);
-  cx.strokeStyle="rgba(200,170,120,.85)"; cx.lineWidth=1.4; cx.beginPath(); cx.moveTo(-30,0); cx.lineTo(-30,14); cx.moveTo(30,0); cx.lineTo(30,14); cx.stroke();
-  cx.shadowColor="rgba(0,0,0,.45)"; cx.shadowBlur=8; cx.shadowOffsetY=3;
-  const g=cx.createLinearGradient(-T.w/2,14,T.w/2,14+T.h); g.addColorStop(0,"#a0703f"); g.addColorStop(1,"#7b4f2a"); cx.fillStyle=g;
-  cx.beginPath(); cx.roundRect(-T.w/2,14,T.w,T.h,6); cx.fill(); cx.shadowColor="transparent";
-  cx.fillStyle="#c9a061"; [-30,30].forEach(x=>{ cx.beginPath(); cx.arc(x,18,2.2,0,7); cx.fill(); });
-  cx.fillStyle="rgba(40,22,8,.92)"; cx.textAlign="center"; cx.textBaseline="middle";
-  cx.font="700 17px 'Aref Ruqaa', serif"; cx.fillText("اطلب أغنيتك",0,30);
-  cx.font="700 12.5px Caveat, cursive"; cx.fillText("▼ song requests",0,47);
-  cx.restore();
-}
-function drawReqBoard(t){
-  const B=REQ; cx.save();
-  // frame and planks
-  cx.shadowColor="rgba(0,0,0,.5)"; cx.shadowBlur=14; cx.shadowOffsetY=5;
-  cx.fillStyle="#4a2e18"; cx.fillRect(B.x-9,B.y-9,B.w+18,B.h+18); cx.shadowColor="transparent";
-  const planks=6, ph=B.h/planks;
-  for(let i=0;i<planks;i++){ const y=B.y+i*ph; const g=cx.createLinearGradient(B.x,y,B.x+B.w,y+ph);
-    const tone=[["#a0703f","#8a5a30"],["#966637","#7f522b"],["#a87843","#8f5f33"]][i%3]; g.addColorStop(0,tone[0]); g.addColorStop(1,tone[1]);
-    cx.fillStyle=g; cx.fillRect(B.x,y,B.w,ph);
-    cx.strokeStyle="rgba(60,35,15,.25)"; cx.lineWidth=0.8; for(let k=0;k<4;k++){ cx.beginPath(); const yy=y+5+k*ph/4.4; cx.moveTo(B.x,yy); for(let x=0;x<=B.w;x+=14) cx.lineTo(B.x+x,yy+Math.sin((x+i*31+k*17)*0.05)*1.6); cx.stroke(); }
-    cx.fillStyle="rgba(40,22,8,.55)"; cx.fillRect(B.x,y+ph-1.2,B.w,1.2); }
-  cx.strokeStyle="rgba(255,220,170,.22)"; cx.lineWidth=1; cx.strokeRect(B.x-8.5,B.y-8.5,B.w+17,B.h+17);
-  // burned-in title
-  cx.textAlign="center"; cx.textBaseline="top"; cx.fillStyle="rgba(45,24,8,.92)";
-  cx.font="700 21px 'Aref Ruqaa', serif"; cx.fillText("اطلب أغنيتك",B.x+B.w/2,B.y+5);
-  cx.font="700 15px Caveat, cursive"; cx.fillText("Your song requests",B.x+B.w/2,B.y+31);
-  // pinned paper notes: what's playing now, then who's next
-  const nowMs=reqNow(), list=REQQ.slice(0,6), cols=2, nw=84, nh=56, gx=(B.w-cols*nw)/3;
-  const items=list.length?list:[{empty:true}];
-  items.forEach((r,i)=>{ const col=items.length===1?0.5:i%cols, row=Math.floor(i/cols); const x=B.x+gx+col*(nw+gx), y=B.y+54+row*(nh+8);
-    const playingNow=!r.empty&&nowMs>=r.start; const tilt=((i*37)%7-3)*0.012; cx.save(); cx.translate(x+nw/2,y+nh/2); cx.rotate(tilt);
-    cx.shadowColor="rgba(0,0,0,.35)"; cx.shadowBlur=4; cx.shadowOffsetY=2;
-    cx.fillStyle=playingNow?"#ffe9a8":["#f6eed8","#f3e6c4","#efe9dc"][i%3]; cx.fillRect(-nw/2,-nh/2,nw,nh); cx.shadowColor="transparent";
-    cx.fillStyle=playingNow?"#c0392b":"#b8862b"; cx.beginPath(); cx.arc(0,-nh/2+5,3,0,7); cx.fill(); cx.fillStyle="rgba(255,240,200,.8)"; cx.beginPath(); cx.arc(-0.8,-nh/2+4.2,1,0,7); cx.fill();
-    cx.textAlign="center"; cx.textBaseline="top";
-    const fit=(txt,f)=>{ cx.font=f; let s=String(txt); while(cx.measureText(s).width>nw-8&&s.length>3) s=s.slice(0,-2)+"…"; return s; };
-    if(r.empty){ cx.fillStyle="#2a1c10"; cx.fillText(fit("No requests yet","700 14px Caveat, cursive"),0,-nh/2+12); cx.fillStyle="#5a3d22"; cx.fillText(fit("be the first!","500 13px Caveat, cursive"),0,-nh/2+30); cx.restore(); return; }
-    const title=String(r.title).replace(/\s*[\(\[\|].*$/,"").replace(/\s*-\s*/," - ");
-    cx.fillStyle="#2a1c10"; cx.font="700 12.5px Caveat, 'Aref Ruqaa', cursive"; const tl=wrap(title,nw-8,2); tl.forEach((l,k)=>cx.fillText(fit(l,cx.font),0,-nh/2+9+k*12));
-    cx.fillStyle=playingNow?"#a52a1f":"#5a3d22"; const mins=Math.max(1,Math.round((r.start-nowMs)/60000));
-    cx.fillText(fit(playingNow?"♪ playing now":("in "+mins+" min"),"700 11.5px Caveat, cursive"),0,-nh/2+33);
-    cx.fillStyle="#7a5a3a"; cx.fillText(fit((/[؀-ۿ]/.test(r.name)?r.name+" —":"— "+r.name),"500 11px Caveat, 'Aref Ruqaa', cursive"),0,-nh/2+44);
-    cx.restore(); });
-  // a little "add yours" card
-  cx.fillStyle="rgba(45,24,8,.85)"; cx.font="700 14px Caveat, cursive"; cx.fillText("+ tap to add yours   ·   ▲ close",B.x+B.w/2,B.y+B.h-20);
-  // evening light falls on the board too
-  const d=darkness(t)*0.55; if(d>0.01){ cx.globalCompositeOperation="multiply"; cx.fillStyle=`rgb(${Math.round(255-d*150)},${Math.round(255-d*130)},${Math.round(255-d*70)})`; cx.fillRect(B.x-12,B.y-12,B.w+24,B.h+24); cx.globalCompositeOperation="source-over";
-    const gl=cx.createRadialGradient(B.x+B.w/2,B.y+B.h/2,10,B.x+B.w/2,B.y+B.h/2,B.w); gl.addColorStop(0,`rgba(255,190,110,${0.18*d})`); gl.addColorStop(1,"rgba(255,190,110,0)"); cx.fillStyle=gl; cx.fillRect(B.x-12,B.y-12,B.w+24,B.h+24); }
-  cx.restore();
-}
 let last=performance.now(), T=0;
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000); last=now; T+=reduce?dt*0.3:dt;
@@ -1096,19 +981,13 @@ function frame(now){
   coffeeSteam(T,dt);
   evening(T);
   drawBoard(T);
-  drawRequests(T);
   if(!reduce) wind(T,dt,w);
 }
 function toScene(e){ const r=cv.getBoundingClientRect(); return [((e.clientX-r.left)*DPR-OX)/S, ((e.clientY-r.top)*DPR-OY)/S]; }
 const onRadio=([x,y])=>x>138&&x<342&&y>108&&y<232;
 const onBoard=([x,y])=>x>BOARD.x-8&&x<BOARD.x+BOARD.w+8&&y>BOARD.y-8&&y<BOARD.y+BOARD.h+8;
-const onTag=([x,y])=>reqP<0.3&&x>TAG.x-6&&x<TAG.x+TAG.w+6&&y<TAG.y+TAG.h+20;
-const onReq=([x,y])=>reqP>0.85&&x>REQ.x-9&&x<REQ.x+REQ.w+9&&y>REQ.y-9&&y<REQ.y+REQ.h+9;
-cv.addEventListener("click",e=>{ const p=toScene(e);
-  if(onReq(p)){ if(p[1]>REQ.y+REQ.h-34&&p[0]>REQ.x+REQ.w*0.62) reqToggle(false); else openReq(); return; }
-  if(onTag(p)){ reqToggle(true); return; }
-  if(onRadio(p)){ if(!woke) setPower(!playing); } else if(onBoard(p)) openBook(); });
-cv.addEventListener("pointermove",e=>{ const p=toScene(e); cv.style.cursor=(onRadio(p)||onBoard(p)||onTag(p)||onReq(p))?"pointer":"default"; });
+cv.addEventListener("click",e=>{ const p=toScene(e); if(onRadio(p)){ if(!woke) setPower(!playing); } else if(onBoard(p)) openBook(); });
+cv.addEventListener("pointermove",e=>{ const p=toScene(e); cv.style.cursor=(onRadio(p)||onBoard(p))?"pointer":"default"; });
 window.addEventListener("resize",resize); resize();
 requestAnimationFrame(frame);
 })();
