@@ -504,10 +504,12 @@ function radioNow(){   // which artist, which video and where in it, right now
   for(const v of pool){ if(pos<v.dur-5) return {who,id:v.id,start:Math.floor(pos),blk}; pos-=v.dur; }
   return {who,id:pool[0].id,start:0,blk};
 }
-const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
+const yt=(()=>{ let player=null, ready=false, want=false, cur=null, silent=false, probe=0;
   const box=document.createElement("div"); box.id="ytBox"; box.style.cssText="position:fixed;width:220px;height:220px;left:0;bottom:0;opacity:0.01;pointer-events:none;z-index:-1;overflow:hidden";
   const slot=document.createElement("div"); slot.id="ytPlayer"; box.appendChild(slot); document.body.appendChild(box);
-  function tune(){ const n=radioNow(); if(!n||!ready) return; cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start}); }
+  function tune(){ const n=radioNow(); if(!n||!ready) return; cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start}); check(); }
+  // browsers may refuse sound before the visitor touches the page: then the music starts silently and the sound comes on at the first touch
+  function check(){ clearTimeout(probe); probe=setTimeout(()=>{ if(!want||!ready||silent) return; const st=player.getPlayerState(); if(st!==1&&st!==3){ silent=true; player.mute(); player.playVideo(); } },2500); }
   window.onYouTubeIframeAPIReady=()=>{ const n=radioNow(); player=new YT.Player("ytPlayer",{width:220,height:220,videoId:n?n.id:"ZHiw3HXVPFE",
     playerVars:{autoplay:0,controls:0,playsinline:1,rel:0},
     events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*duckK*100)); if(want) tune(); },
@@ -515,14 +517,16 @@ const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
             onError:()=>{ if(want) setTimeout(()=>{ const n=radioNow(); if(n){ cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start+30}); } },2000); }}}); };
   // keep the music going, and swap artist when the 2 hours are up
   setInterval(()=>{ if(!want||!ready) return; const n=radioNow(); if(n&&cur&&n.blk!==cur.blk){ tune(); return; }
-    const st=player.getPlayerState(); if(st===0){ tune(); } else if(st===2||st===5||st===-1){ player.playVideo(); } if(player.isMuted()) player.unMute(); },4000);
+    const st=player.getPlayerState(); if(st===0){ tune(); } else if(st===2||st===5||st===-1){ player.playVideo(); } if(player.isMuted()&&!silent) player.unMute(); },4000);
   const tag=document.createElement("script"); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   async function syncList(){ try{ const d=await fetch("radio.json?n="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null);
       if(d&&(Array.isArray(d.fairuz)||Array.isArray(d.kulthum))){ const was=JSON.stringify(RADIO); RADIO=d; if(was!==JSON.stringify(RADIO)&&want&&ready) tune(); } }catch(e){} }
   syncList(); setInterval(syncList,60000);
-  return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*duckK*100)); tune(); } },
+  return { play(){ want=true; silent=false; if(ready){ player.unMute(); player.setVolume(Math.round(volume*duckK*100)); tune(); } },
            pause(){ want=false; if(ready) player.pauseVideo(); },
-           vol(v){ if(ready) player.setVolume(Math.round(v*duckK*100)); } };
+           vol(v){ if(ready) player.setVolume(Math.round(v*duckK*100)); },
+           get silent(){ return silent; },
+           wake(){ if(!silent) return false; silent=false; if(ready){ player.unMute(); player.setVolume(Math.round(volume*duckK*100)); player.playVideo(); } return true; } };
 })();
 /* ---------- Osfour live: when the host goes live, everyone with the radio on hears the host's voice in real time ---------- */
 let hostLive=false;
@@ -656,7 +660,11 @@ let pendingReload=false;
 let lastSlot=slotNow();
 setInterval(()=>{ const s2=slotNow(); if(s2!==lastSlot){ lastSlot=s2; if(playing) playNow(); } },20000);
 window.addEventListener("pagehide",()=>{ playing=false; audio.pause(); yt.pause(); });
-$("power").addEventListener("click",()=>setPower(!playing));
+let woke=false;
+["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{ if(playing&&yt.silent){ yt.wake(); woke=true; setTimeout(()=>woke=false,700); } try{ listenCtx(); }catch(e){} if(playing&&trackNow()&&audio.paused) audio.play().catch(()=>{}); },{capture:true,passive:true}));
+$("power").addEventListener("click",()=>{ if(woke) return; setPower(!playing); });
+// the radio is on as soon as the page opens; touch the radio to turn it off
+setTimeout(()=>{ if(!playing) setPower(true); },300);
 $("vol").addEventListener("input",()=>{ volume=$("vol").value/100; audio.volume=volume; yt.vol(volume); });
 
 function updateNow(){
@@ -973,7 +981,7 @@ function frame(now){
 function toScene(e){ const r=cv.getBoundingClientRect(); return [((e.clientX-r.left)*DPR-OX)/S, ((e.clientY-r.top)*DPR-OY)/S]; }
 const onRadio=([x,y])=>x>138&&x<342&&y>108&&y<232;
 const onBoard=([x,y])=>x>BOARD.x-8&&x<BOARD.x+BOARD.w+8&&y>BOARD.y-8&&y<BOARD.y+BOARD.h+8;
-cv.addEventListener("click",e=>{ const p=toScene(e); if(onRadio(p)) setPower(!playing); else if(onBoard(p)) openBook(); });
+cv.addEventListener("click",e=>{ const p=toScene(e); if(onRadio(p)){ if(!woke) setPower(!playing); } else if(onBoard(p)) openBook(); });
 cv.addEventListener("pointermove",e=>{ const p=toScene(e); cv.style.cursor=(onRadio(p)||onBoard(p))?"pointer":"default"; });
 window.addEventListener("resize",resize); resize();
 requestAnimationFrame(frame);
