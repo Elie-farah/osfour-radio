@@ -82,6 +82,9 @@ $("keySave").onclick=async()=>{ const k=$("keyIn").value.trim(); $("keyMsg").tex
   if(await checkKey(k)){ KEY=k; try{ localStorage.setItem("osfourHostKey",k); }catch(e){} $("keyCard").hidden=true; $("hostCard").hidden=false; }
   else $("keyMsg").textContent="That key didn't work."; };
 
+async function iceServers(){   // relay servers so the voice crosses any network, not only the same Wi-Fi
+  try{ const d=await Promise.race([fetch("/api/turn",{cache:"no-store"}).then(r=>r.json()),new Promise(z=>setTimeout(()=>z(null),4000))]); if(d&&d.iceServers&&d.iceServers.length) return d.iceServers; }catch(e){}
+  return [{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]; }
 let mic=null, peer=null, stream=null, beat=null, calls=new Map(), live=false, ac=null, raf=0;
 async function tell(on){ try{ await fetch("/api/live",{method:"POST",headers:{"content-type":"application/json","x-host-key":KEY},body:JSON.stringify(on?{live:true,peerId:peer.id}:{live:false})}); }catch(e){} }
 function setCount(){ const n=[...calls.values()].filter(c=>c.open).length; $("count").textContent= live ? (n===1?"1 person is listening live":n+" people are listening live") : ""; }
@@ -113,7 +116,7 @@ async function goLive(){
   catch(e){ $("status").textContent="The microphone wasn't allowed. Allow it in the browser and try again."; return; }
   try{ stream=studio(mic); if(ac.state!=="running") await Promise.race([ac.resume(),new Promise(z=>setTimeout(z,1500))]); if(ac.state!=="running") stream=mic; }catch(e){ stream=mic; }   // clean, warm voice; plain mic if this device can't
   meter();
-  peer=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}});
+  peer=new Peer({config:{iceServers:await iceServers()}});
   peer.on("open",async()=>{ await tell(true); live=true; beat=setInterval(()=>tell(true),15000);
     $("mic").classList.add("live"); $("mic").setAttribute("aria-pressed","true"); $("micTxt").textContent="End live";
     $("status").textContent="● You're live"; $("status").className="status on"; $("liveCtl").hidden=false; setCount(); });
