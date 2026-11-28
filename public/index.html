@@ -54,6 +54,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pill{display:inline-flex;align-items:center;gap:7px;padding:3px 11px;border-radius:99px;border:1px solid var(--line);font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .pill i{width:8px;height:8px;border-radius:50%;background:#6b5a48}
 .pill.on{color:#ffd9d4;border-color:var(--flag)}
+.pill.live{color:#fff;background:rgba(226,70,59,.25);border-color:#e2463b}
 .pill.on i{background:var(--flag);box-shadow:0 0 8px var(--flag);animation:blink 1.6s infinite}
 @keyframes blink{50%{opacity:.35}}
 
@@ -427,11 +428,13 @@ function setPower(on){
   if(on){ if(trackNow()){ yt.pause(); playNow(); } else { yt.play(); } }
   else { audio.pause(); yt.pause(); if(pendingReload) setTimeout(()=>location.reload(),400); }
   $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
-  $("onair").classList.toggle("on",playing); $("onairTxt").textContent=playing?"On air":"Off air";
+  $("onair").classList.toggle("on",playing||liveOn); $("onairTxt").textContent=liveOn?"Live · Osfour":(playing?"On air":"Off air");
+  if(playing) liveCheck(); else liveStop();
 }
 /* Until Osfour's own MP3s are added, the old radio plays Fairuz and Umm Kulthum through YouTube's official player.
    Every 2 hours (Beirut time) it swaps between them, and it runs on the clock, so whenever anyone opens the radio
    they hear the same song at the same moment, like a real station. The lists live in radio.json. */
+let duckK=1;   // music volume is lowered while Osfour talks live
 let RADIO={blockHours:2, order:["kulthum","fairuz"],
   fairuz:[{id:"L59MxhvHxbI",dur:16951},{id:"NVwyd2vWERs",dur:10519},{id:"KV2SV7yJ3ow",dur:9633},{id:"ZHiw3HXVPFE",dur:2718},{id:"1U6aw2jrv3E",dur:8375},{id:"2HE1IOAfYwY",dur:7201}],
   kulthum:[{id:"Ifqvh_OKq3A",dur:19625},{id:"JcrDpYQ1bZY",dur:13561},{id:"0U9DAYDA58s",dur:3061},{id:"wYqNvF4zBRw",dur:35785}]};
@@ -452,7 +455,7 @@ const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
   function tune(){ const n=radioNow(); if(!n||!ready) return; cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start}); }
   window.onYouTubeIframeAPIReady=()=>{ const n=radioNow(); player=new YT.Player("ytPlayer",{width:220,height:220,videoId:n?n.id:"ZHiw3HXVPFE",
     playerVars:{autoplay:0,controls:0,playsinline:1,rel:0},
-    events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*100)); if(want) tune(); },
+    events:{onReady:()=>{ ready=true; player.setVolume(Math.round(volume*duckK*100)); if(want) tune(); },
             onStateChange:e=>{ if(!want) return; if(e.data===0){ tune(); } else if(e.data===2||e.data===5) setTimeout(()=>{ if(want) player.playVideo(); },300); },
             onError:()=>{ if(want) setTimeout(()=>{ const n=radioNow(); if(n){ cur=n; player.loadVideoById({videoId:n.id,startSeconds:n.start+30}); } },2000); }}}); };
   // keep the music going, and swap artist when the 2 hours are up
@@ -462,10 +465,33 @@ const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
   async function syncList(){ try{ const d=await fetch("radio.json?n="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null);
       if(d&&(Array.isArray(d.fairuz)||Array.isArray(d.kulthum))){ const was=JSON.stringify(RADIO); RADIO=d; if(was!==JSON.stringify(RADIO)&&want&&ready) tune(); } }catch(e){} }
   syncList(); setInterval(syncList,60000);
-  return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*100)); tune(); } },
+  return { play(){ want=true; if(ready){ player.unMute(); player.setVolume(Math.round(volume*duckK*100)); tune(); } },
            pause(){ want=false; if(ready) player.pauseVideo(); },
-           vol(v){ if(ready) player.setVolume(Math.round(v*100)); } };
+           vol(v){ if(ready) player.setVolume(Math.round(v*duckK*100)); } };
 })();
+/* ---------- Osfour live: when the host goes live, everyone with the radio on hears the host's voice in real time ---------- */
+let liveOn=false, livePeer=null, liveHost=null, liveAudio=null, peerLib=null;
+function liveSign(){ $("onair").classList.toggle("on",playing||liveOn); $("onair").classList.toggle("live",liveOn); $("onairTxt").textContent=liveOn?"Live · Osfour":(playing?"On air":"Off air"); }
+function loadPeer(){ if(peerLib) return peerLib; peerLib=new Promise((ok,no)=>{ if(window.Peer) return ok(); const sc=document.createElement("script"); sc.src="/vendor/peerjs.min.js"; sc.onload=()=>ok(); sc.onerror=no; document.head.appendChild(sc); }); return peerLib; }
+function duck(on){ duckK=on?0.15:1; yt.vol(volume); audio.volume=volume*duckK; }
+function liveStop(){ if(livePeer){ try{ livePeer.destroy(); }catch(e){} } livePeer=null; liveHost=null; if(liveAudio){ liveAudio.pause(); liveAudio.srcObject=null; } duck(false); }
+async function liveJoin(hostId){
+  if(liveHost===hostId && livePeer && !livePeer.destroyed) return;
+  liveStop(); liveHost=hostId;
+  try{ await loadPeer(); }catch(e){ return; }
+  if(!liveAudio){ liveAudio=new Audio(); liveAudio.autoplay=true; liveAudio.playsInline=true; }
+  liveAudio.play().catch(()=>{});   // unlock playback while we still have the listener's tap
+  const p=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}}); livePeer=p;
+  p.on("open",()=>{ const c=p.connect(hostId,{reliable:true}); c.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
+  p.on("call",call=>{ call.answer(); call.on("stream",st=>{ liveAudio.srcObject=st; liveAudio.volume=1; liveAudio.play().catch(()=>{}); duck(true); });
+    call.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
+  p.on("error",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,5000); } });
+}
+async function liveCheck(){ try{ const d=await fetch("/api/live",{cache:"no-store"}).then(r=>r.ok?r.json():{live:false});
+    liveOn=!!d.live; liveSign();
+    if(liveOn && playing) liveJoin(d.peerId); else if(!liveOn && liveHost) liveStop();
+  }catch(e){} }
+liveCheck(); setInterval(liveCheck,8000);
 // when the site is updated, open pages pick up the new version by themselves (only while the radio is off, so music is never cut)
 (()=>{ let base=null; async function sig(){ try{ const h=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()); let x=0; for(let i=0;i<h.length;i++) x=(x*31+h.charCodeAt(i))|0; return x; }catch(e){ return null; } }
   sig().then(v=>base=v);
