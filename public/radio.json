@@ -1,5 +1,5 @@
 {
-  "note": "Every 2 hours (Beirut time) the radio swaps between Fairuz and Umm Kulthum. Everyone hears the same song at the same moment. Add videos as {id, dur} with dur in seconds.",
+  "note": "Daily schedule, Beirut time. In each time slot the singers in 'order' take turns every 'blockHours'. A slot with an empty order is silence. Everyone hears the same song at the same moment. Videos are {id, dur} with dur in seconds.",
   "blockHours": 2,
   "order": [
     "kulthum",
@@ -121,16 +121,179 @@
       "dur": 3129
     }
   ],
-  "specials": [
+  "wadih": [
     {
-      "note": "Party time: Fadel Shaker and Wael Kfoury swap every hour, Beirut time",
-      "from": "2026-11-28T12:55:00",
-      "to": "2026-11-28T19:00:00",
-      "blockHours": 1,
+      "id": "cbXfTNSX-oQ",
+      "dur": 6183
+    },
+    {
+      "id": "0PxqE0ExRCM",
+      "dur": 7584
+    },
+    {
+      "id": "U5yC3W0qgIg",
+      "dur": 5459
+    },
+    {
+      "id": "Z6bGt-WoGX0",
+      "dur": 3637
+    },
+    {
+      "id": "EC_i4lKSZ9I",
+      "dur": 5455
+    }
+  ],
+  "melhem": [
+    {
+      "id": "3CCo5Hz_h7Y",
+      "dur": 5553
+    },
+    {
+      "id": "9cMCMfdMrnw",
+      "dur": 4193
+    },
+    {
+      "id": "sFjHoWf_O1M",
+      "dur": 3231
+    },
+    {
+      "id": "8OynSDCTfnw",
+      "dur": 6181
+    },
+    {
+      "id": "WsVcSJAk0Ks",
+      "dur": 6564
+    },
+    {
+      "id": "ANeJFb2ai8w",
+      "dur": 5697
+    },
+    {
+      "id": "c9IVQsWqdG8",
+      "dur": 4457
+    }
+  ],
+  "toni": [
+    {
+      "id": "oJk-OhWNcHM",
+      "dur": 4832
+    },
+    {
+      "id": "Oc785LDhE6o",
+      "dur": 2898
+    },
+    {
+      "id": "SBnbUkDpPfQ",
+      "dur": 1740
+    },
+    {
+      "id": "P_Q9HesSiCA",
+      "dur": 1654
+    },
+    {
+      "id": "bEiHklIZM6E",
+      "dur": 3672
+    },
+    {
+      "id": "QctusCB97wA",
+      "dur": 3065
+    }
+  ],
+  "issam": [
+    {
+      "id": "nvkWUHIcfoM",
+      "dur": 1669
+    },
+    {
+      "id": "20rOC1ScpTs",
+      "dur": 2212
+    },
+    {
+      "id": "QBY2W9_sBz0",
+      "dur": 2598
+    }
+  ],
+  "oldies": [
+    {
+      "id": "VT2Y1TcWVos",
+      "dur": 3834
+    },
+    {
+      "id": "w2Bltt1qJZw",
+      "dur": 5324
+    },
+    {
+      "id": "HuAXPEK7bd4",
+      "dur": 5513
+    },
+    {
+      "id": "GdtODr8umJ0",
+      "dur": 2718
+    },
+    {
+      "id": "s07lLptbJyY",
+      "dur": 1786
+    },
+    {
+      "id": "U60wqMSylHM",
+      "dur": 3188
+    },
+    {
+      "id": "fNC1Yfe4aLg",
+      "dur": 3041
+    },
+    {
+      "id": "Em8dHYZWfCM",
+      "dur": 6386
+    },
+    {
+      "id": "jCjtLANkH3k",
+      "dur": 1439
+    }
+  ],
+  "daily": [
+    {
+      "from": "06:00",
+      "to": "10:00",
+      "order": [
+        "fairuz",
+        "wadih"
+      ],
+      "blockHours": 1
+    },
+    {
+      "from": "10:00",
+      "to": "16:00",
       "order": [
         "fadel",
-        "wael"
-      ]
+        "wael",
+        "melhem",
+        "toni",
+        "issam"
+      ],
+      "blockHours": 1
+    },
+    {
+      "from": "16:00",
+      "to": "22:00",
+      "order": [
+        "oldies"
+      ],
+      "blockHours": 2
+    },
+    {
+      "from": "22:00",
+      "to": "24:00",
+      "order": [
+        "kulthum"
+      ],
+      "blockHours": 2
+    },
+    {
+      "from": "00:00",
+      "to": "06:00",
+      "order": [],
+      "quiet": "Back at 6 AM"
     }
   ]
 }
