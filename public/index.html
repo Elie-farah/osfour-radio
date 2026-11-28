@@ -536,7 +536,7 @@ function setDuck(k){ duckK=k; yt.vol(volume); audio.volume=Math.max(0,Math.min(1
 // while Osfour is live the music sits lower, and dips right down whenever the host is actually talking
 function duck(on,stream){ cancelAnimationFrame(duckRaf); if(voiceMeter){ try{ voiceMeter.src.disconnect(); }catch(e){} voiceMeter=null; }
   if(!on){ setDuck(1); return; }
-  try{ const ctx=listenCtx(); const an=ctx.createAnalyser(); an.fftSize=1024; const src=ctx.createMediaStreamSource(stream); src.connect(an); voiceMeter={ctx,src,an,d:new Float32Array(an.fftSize)}; if(ctx.state==="suspended") ctx.resume(); }catch(e){}
+  try{ const ctx=listenCtx(); const an=ctx.createAnalyser(); an.fftSize=1024; const src=stream; src.connect(an); voiceMeter={ctx,src,an,d:new Float32Array(an.fftSize)}; if(ctx.state==="suspended") ctx.resume(); }catch(e){}
   let k=duckK;
   const loop=()=>{ let talking=true;
     if(voiceMeter){ voiceMeter.an.getFloatTimeDomainData(voiceMeter.d); let sum=0; for(const v of voiceMeter.d) sum+=v*v; const rms=Math.sqrt(sum/voiceMeter.d.length); if(rms>0.02) lastVoice=performance.now(); talking=performance.now()-lastVoice<1400; }
@@ -544,33 +544,44 @@ function duck(on,stream){ cancelAnimationFrame(duckRaf); if(voiceMeter){ try{ vo
     if(Math.abs(k-duckK)>0.004) setDuck(k);
     duckRaf=requestAnimationFrame(loop); };
   loop(); }
-function liveStop(){ if(livePeer){ try{ livePeer.destroy(); }catch(e){} } livePeer=null; liveHost=null; if(liveAudio){ liveAudio.pause(); liveAudio.srcObject=null; } duck(false); }
-function hiFi(sdp){ return sdp.replace(/a=fmtp:(\d+) (.*useinbandfec=1.*)/g,(m,pt,rest)=>{ let r=rest.replace(/;?(stereo|sprop-stereo|maxaveragebitrate|maxplaybackrate)=[^;]*/g,""); return "a=fmtp:"+pt+" "+r+";stereo=1;sprop-stereo=1;maxaveragebitrate=128000;maxplaybackrate=48000"; }); }
-async function liveJoin(hostId){
-  if(liveHost===hostId && livePeer && !livePeer.destroyed) return;
-  liveStop(); liveHost=hostId;
-  try{ await loadPeer(); }catch(e){ return; }
-  if(!liveAudio){ liveAudio=new Audio(); liveAudio.autoplay=true; liveAudio.playsInline=true; }
-  liveAudio.play().catch(()=>{});   // unlock playback while we still have the listener's tap
-  const p=new Peer({config:{iceServers:await iceServers()}}); livePeer=p;
-  p.on("open",()=>{ const c=p.connect(hostId,{reliable:true}); c.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
-  p.on("call",call=>{ call.answer(undefined,{sdpTransform:hiFi}); call.on("stream",st=>{ liveAudio.srcObject=st; liveAudio.volume=1; liveAudio.play().catch(()=>{}); duck(true,st); });
-    call.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
-  p.on("error",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,5000); } });
+/* the voice arrives as short pieces through the site itself, so it works on any network */
+let liveSess=null, liveGain=null, liveRun=0;
+const myLid=(()=>{ try{ let v=localStorage.getItem("osfourLid"); if(!v){ v=Math.random().toString(36).slice(2,12)+Date.now().toString(36); localStorage.setItem("osfourLid",v); } return v; }catch(e){ return "l"+Math.random().toString(36).slice(2,12); } })();
+function liveStop(){ liveRun++; liveSess=null; if(liveGain){ try{ liveGain.disconnect(); }catch(e){} liveGain=null; } duck(false); }
+async function liveJoin(sess,seq){
+  if(liveSess===sess) return;
+  liveStop(); liveSess=sess; const run=liveRun, ctx=listenCtx();
+  liveGain=ctx.createGain(); liveGain.gain.value=1.15; liveGain.connect(ctx.destination); duck(true,liveGain);
+  let n=Math.max(0,(seq??0)-1), at=0, miss=0;
+  while(run===liveRun){
+    let r=null; try{ r=await fetch(`/api/seg?s=${encodeURIComponent(sess)}&n=${n}&l=${myLid}`,{cache:"no-store"}); }catch(e){}
+    if(run!==liveRun) return;
+    if(r&&r.status===200){ miss=0;
+      try{ const buf=await ctx.decodeAudioData(await r.arrayBuffer()); if(run!==liveRun) return;
+        if(ctx.state==="suspended") ctx.resume();
+        if(at<ctx.currentTime+0.05) at=ctx.currentTime+0.4;               // small cushion after a pause
+        if(at-ctx.currentTime>14) at=ctx.currentTime+0.4;                  // far behind: catch up
+        const src=ctx.createBufferSource(); src.buffer=buf; src.connect(liveGain); src.start(at); at+=buf.duration;
+      }catch(e){}
+      n++; const ahead=at-ctx.currentTime; if(ahead>2.2) await new Promise(z=>setTimeout(z,Math.min(2500,(ahead-1.8)*1000))); continue; }
+    miss++; if(miss>40){ const d=await fetch("/api/live",{cache:"no-store"}).then(x=>x.json()).catch(()=>null); if(run!==liveRun) return; if(d&&d.live&&d.peerId===sess&&d.seq>n){ n=d.seq; } miss=0; }
+    await new Promise(z=>setTimeout(z,600));
+  }
 }
 async function liveCheck(){ try{ const d=await fetch("/api/live",{cache:"no-store"}).then(r=>r.ok?r.json():{live:false});
     liveOn=!!d.live; liveSign();
-    if(liveOn && playing && !hostLive) liveJoin(d.peerId); else if((!liveOn || hostLive) && liveHost) liveStop();
+    if(liveOn && playing && !hostLive) liveJoin(d.peerId,d.seq); else if((!liveOn || hostLive || !playing) && liveSess) liveStop();
+    else if(liveOn && liveSess && liveSess!==d.peerId) liveJoin(d.peerId,d.seq);
   }catch(e){} }
 liveCheck(); setInterval(liveCheck,8000);
 
 /* ---------- the host microphone, right on the site (password protected) ---------- */
 (()=>{
   let KEY=""; try{ KEY=localStorage.getItem("osfourHostKey")||""; }catch(e){}
-  let mic=null, out=null, peer=null, beat=null, calls=new Map(), hc=null, raf=0;
+  let mic=null, out=null, peer=null, beat=null, hc=null, raf=0, sess=null, seq=0, rec=null, recT=0, listeners=0;
   const H={"content-type":"application/json"};
   async function check(k){ try{ const r=await fetch("/api/live",{method:"POST",headers:{...H,"x-host-key":k},body:JSON.stringify({check:true})}); return r.ok; }catch(e){ return false; } }
-  async function tell(on){ try{ await fetch("/api/live",{method:"POST",headers:{...H,"x-host-key":KEY},body:JSON.stringify(on?{live:true,peerId:peer.id}:{live:false})}); }catch(e){} }
+  async function tell(on){ try{ await fetch("/api/live",{method:"POST",headers:{...H,"x-host-key":KEY},body:JSON.stringify(on?{live:true,peerId:sess}:{live:false})}); }catch(e){} }
   function open(){ $("hostBox").hidden=false; const ok=!!KEY; $("hostLogin").hidden=ok; $("hostDesk").hidden=!ok; if(!ok) setTimeout(()=>$("hostPass").focus(),50); }
   $("micBtn").onclick=open; $("hostX").onclick=()=>{ $("hostBox").hidden=true; };
   $("hostBox").addEventListener("click",e=>{ if(e.target===$("hostBox")) $("hostBox").hidden=true; });
@@ -601,7 +612,7 @@ liveCheck(); setInterval(liveCheck,8000);
       if(hc.state==="running") return o; }catch(e){}
     return input;
   }
-  function count(){ const n=[...calls.values()].filter(c=>c.open).length; $("hostCount").textContent= hostLive ? (n===1?"1 person is listening live":n+" people are listening live") : ""; }
+  function count(){ const n=listeners; $("hostCount").textContent= hostLive ? (n===1?"1 person is listening live":n+" people are listening live") : ""; }
   function ui(){ $("bigMic").classList.toggle("on",hostLive); $("bigMic").setAttribute("aria-pressed",String(hostLive)); $("bigMicTxt").textContent=hostLive?"End live":"Go live";
     $("micBtn").classList.toggle("on",hostLive); $("hostStatus").textContent=hostLive?"● You're live":"Off air"; $("hostStatus").style.color=hostLive?"#ff8a7e":""; $("hostMute").hidden=!hostLive; count(); liveSign(); }
   async function go(){
@@ -609,21 +620,25 @@ liveCheck(); setInterval(liveCheck,8000);
     try{ mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false,sampleRate:48000}}); }
     catch(e){ $("hostStatus").textContent="The microphone wasn't allowed. Allow it in the browser and try again."; return; }
     out=await studioSafe(mic);
-    try{ await loadPeer(); }catch(e){ $("hostStatus").textContent="Couldn't start. Check the internet and try again."; return; }
-    peer=new Peer({config:{iceServers:await iceServers()}});
-    peer.on("open",async()=>{ hostLive=true; await tell(true); liveOn=true; beat=setInterval(()=>tell(true),15000); ui(); });
-    peer.on("connection",conn=>{ conn.on("open",()=>{ const call=peer.call(conn.peer,out,{sdpTransform:hiFi}); calls.set(conn.peer,call);
-        call.on("close",()=>{ calls.delete(conn.peer); count(); }); call.on("error",()=>{ calls.delete(conn.peer); count(); }); setTimeout(count,1500); });
-      conn.on("close",()=>{ const c=calls.get(conn.peer); if(c) c.close(); calls.delete(conn.peer); count(); }); });
-    peer.on("disconnected",()=>{ try{ peer.reconnect(); }catch(e){} });
+    // record a short piece every few seconds and send it to the site; listeners play the pieces back to back
+    const types=["audio/webm;codecs=opus","audio/ogg;codecs=opus","audio/mp4;codecs=mp4a.40.2","audio/mp4"], mime=types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||"";
+    if(!window.MediaRecorder){ $("hostStatus").textContent="This browser can't send your voice. Please use Chrome, Edge or Safari."; return; }
+    sess=crypto.randomUUID?crypto.randomUUID():(Date.now().toString(36)+Math.random().toString(36).slice(2,10)); seq=0;
+    const send=async(blob,n,S)=>{ for(let t=0;t<3;t++){ try{ const r=await fetch(`/api/seg?s=${S}&n=${n}`,{method:"POST",headers:{"x-host-key":KEY,"content-type":blob.type||mime||"audio/webm"},body:blob});
+        if(r.ok){ const j=await r.json().catch(()=>null); if(j){ listeners=j.listeners||0; count(); } return; } }catch(e){} await new Promise(z=>setTimeout(z,500)); } };
+    const piece=()=>{ if(!out) return; const r=new MediaRecorder(out,mime?{mimeType:mime,audioBitsPerSecond:128000}:{audioBitsPerSecond:128000}); const parts=[]; const n=seq++, S=sess;
+      r.ondataavailable=e=>{ if(e.data&&e.data.size) parts.push(e.data); }; r.onstop=()=>{ if(parts.length) send(new Blob(parts,{type:parts[0].type||mime}),n,S); };
+      r.start(); const old=rec; rec=r; if(old&&old.state!=="inactive") old.stop(); };
+    hostLive=true; await tell(true); liveOn=true; beat=setInterval(()=>tell(true),15000); ui();
+    piece(); recT=setInterval(piece,3000);
   }
   async function stop(){
     hostLive=false; clearInterval(beat); await tell(false); liveOn=false;
-    calls.forEach(c=>{ try{ c.close(); }catch(e){} }); calls.clear(); try{ peer&&peer.destroy(); }catch(e){} peer=null;
+    clearInterval(recT); recT=0; try{ rec&&rec.state!=="inactive"&&rec.stop(); }catch(e){} rec=null; sess=null; listeners=0;
     [mic,out].forEach(st=>st&&st.getTracks().forEach(t=>t.stop())); mic=out=null; cancelAnimationFrame(raf); $("hostLvl").style.width="0"; try{ hc&&hc.close(); }catch(e){} hc=null;
     $("hostMute").setAttribute("aria-pressed","false"); $("hostMute").textContent="Mute my mic"; ui();
   }
-  $("bigMic").onclick=()=>{ if(hostLive||peer){ stop(); return; }
+  $("bigMic").onclick=()=>{ if(hostLive||recT){ stop(); return; }
     try{ if(!hc) hc=new (window.AudioContext||window.webkitAudioContext)(); hc.resume(); }catch(e){}   // start the sound engine right on the tap, so the browser allows it
     go(); };
   $("hostMute").onclick=()=>{ if(!mic) return; const on=$("hostMute").getAttribute("aria-pressed")!=="true"; mic.getAudioTracks().forEach(t=>t.enabled=!on);

@@ -12,7 +12,7 @@ export default async (req) => {
   if (req.method === "GET") {
     const s = (await store.get("state", { type: "json" })) || {};
     const live = !!(s.peerId && s.beat && Date.now() - s.beat < FRESH);
-    return Response.json(live ? { live, peerId: s.peerId, since: s.since } : { live: false }, { headers: { "cache-control": "no-store" } });
+    return Response.json(live ? { live, peerId: s.peerId, since: s.since, seq: s.seq ?? -1 } : { live: false }, { headers: { "cache-control": "no-store" } });
   }
   if (req.method === "POST") {
     // slow down password guessing: after 8 wrong tries from one address, wait 15 minutes
@@ -29,7 +29,7 @@ export default async (req) => {
     if (!/^[A-Za-z0-9-]{6,64}$/.test(peerId)) return new Response("Bad id", { status: 400 });
     const s = (await store.get("state", { type: "json" })) || {};
     const since = s.peerId === peerId && s.since ? s.since : Date.now();
-    await store.setJSON("state", { peerId, since, beat: Date.now() });
+    await store.setJSON("state", { peerId, since, beat: Date.now(), seq: s.peerId === peerId ? s.seq : -1 });
     return Response.json({ ok: true, live: true });
   }
   return new Response("Method not allowed", { status: 405 });
