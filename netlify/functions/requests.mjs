@@ -36,7 +36,26 @@ async function embeddable(vid) {
     return ok ? len : 0;
   } catch { return 0; }
 }
+// YouTube's official search (free key from Google, set as YT_API_KEY in Netlify)
+const ytKey = () => (globalThis.Netlify?.env?.get("YT_API_KEY") ?? process.env.YT_API_KEY ?? "").trim();
+const isoSec = d => { const m = String(d || "").match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); return m ? ((+m[1] || 0) * 86400 + (+m[2] || 0) * 3600 + (+m[3] || 0) * 60 + (+m[4] || 0)) : 0; };
+async function apiDetails(ids, key) {
+  const u = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status&id=" + ids.join(",") + "&key=" + encodeURIComponent(key);
+  const d = await fetch(u).then(r => r.json());
+  return (d.items || []).filter(v => v.status?.embeddable && v.status?.privacyStatus === "public" && !v.contentDetails?.regionRestriction?.blocked?.includes("LB"))
+    .map(v => ({ vid: v.id, dur: isoSec(v.contentDetails?.duration), title: v.snippet?.title || "" }));
+}
+async function apiFind(q, key) {
+  const link = q.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/);
+  if (link) return (await apiDetails([link[1]], key)).find(v => v.dur >= MIN_DUR && v.dur <= MAX_DUR) || null;
+  const u = "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&videoSyndicated=true&maxResults=10&q=" + encodeURIComponent(q) + "&key=" + encodeURIComponent(key);
+  const d = await fetch(u).then(r => r.json());
+  const ids = (d.items || []).map(i => i.id?.videoId).filter(Boolean); if (!ids.length) return null;
+  const det = await apiDetails(ids, key); const order = id => ids.indexOf(id);
+  return det.sort((a, b) => order(a.vid) - order(b.vid)).find(v => v.dur >= MIN_DUR && v.dur <= MAX_DUR && !/(\bmix\b|playlist|full album|كوكتيل|ساعة|البوم كامل)/i.test(v.title)) || null;
+}
 async function findSong(q) {
+  const key = ytKey(); if (key) return apiFind(q, key);
   const url = "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
   const html = await fetch(url, { headers: YT_HEADERS }).then(r => r.text());
   const list = parseResults(html).filter(v => v.dur >= MIN_DUR && v.dur <= MAX_DUR && !/(\bmix\b|playlist|full album|كوكتيل|ساعة|البوم كامل)/i.test(v.title));
@@ -59,11 +78,6 @@ export default async (req) => {
   const store = getStore({ name: "osfour-requests", consistency: "strong" });
   const now = Date.now();
   let q = live((await store.get("queue", { type: "json" })) || [], now);
-  if (req.method === "GET" && isHost(req) && new URL(req.url).searchParams.get("diag")) {   // host-only check of the song search
-    const u = "https://www.youtube.com/results?search_query=" + encodeURIComponent(new URL(req.url).searchParams.get("diag"));
-    const r = await fetch(u, { headers: YT_HEADERS }); const t = await r.text();
-    return Response.json({ status: r.status, url: r.url, len: t.length, init: /ytInitialData/.test(t), vids: (t.match(/"videoId":"/g) || []).length, found: parseResults(t).slice(0, 3), head: t.slice(0, 300).replace(/<[^>]+>/g, " ") }, { headers: nc });
-  }
   if (req.method === "GET") return Response.json({ queue: pub(q), now }, { headers: nc });
 
   if (req.method === "DELETE") {
