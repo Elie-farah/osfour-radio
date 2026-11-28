@@ -490,11 +490,14 @@ let RADIO={blockHours:2, order:["kulthum","fairuz"],
 function beirutSeconds(){ const now=new Date(); const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Beirut",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(now).reduce((o,x)=>(o[x.type]=x.value,o),{});
   return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second)/1000; }
 function radioNow(){   // which artist, which video and where in it, right now
-  const B=Math.max(0.5,+RADIO.blockHours||2)*3600, s=beirutSeconds(), blk=Math.floor(s/B), off=s-blk*B;
-  const order=RADIO.order&&RADIO.order.length?RADIO.order:["fairuz","kulthum"], who=order[blk%order.length];
+  const s=beirutSeconds(); let R=RADIO, tag="";
+  for(const [i,x] of (RADIO.specials||[]).entries()){ const a=Date.parse(x.from+"Z")/1000, b=Date.parse(x.to+"Z")/1000;   // special hours (Beirut time) with other singers
+    if(s>=a&&s<b&&x.order&&x.order.length){ R=x; tag="sp"+i+"-"; break; } }
+  const B=Math.max(0.5,+R.blockHours||2)*3600, blk0=Math.floor(s/B), off=s-blk0*B;
+  const order=R.order&&R.order.length?R.order:["fairuz","kulthum"], who=order[blk0%order.length], blk=tag+blk0;
   const pool=(RADIO[who]||[]).filter(v=>/^[\w-]{11}$/.test(v.id)&&v.dur>60); if(!pool.length) return null;
   const total=pool.reduce((a,v)=>a+v.dur,0);
-  let pos=(Math.floor(blk/order.length)*B+off)%total;            // each time an artist comes back, it continues where it left off
+  let pos=(Math.floor(blk0/order.length)*B+off)%total;            // each time an artist comes back, it continues where it left off
   for(const v of pool){ if(pos<v.dur-5) return {who,id:v.id,start:Math.floor(pos),blk}; pos-=v.dur; }
   return {who,id:pool[0].id,start:0,blk};
 }

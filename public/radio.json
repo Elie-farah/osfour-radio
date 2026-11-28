@@ -1,19 +1,136 @@
 {
   "note": "Every 2 hours (Beirut time) the radio swaps between Fairuz and Umm Kulthum. Everyone hears the same song at the same moment. Add videos as {id, dur} with dur in seconds.",
   "blockHours": 2,
-  "order": ["kulthum", "fairuz"],
+  "order": [
+    "kulthum",
+    "fairuz"
+  ],
   "fairuz": [
-    {"id": "L59MxhvHxbI", "dur": 16951},
-    {"id": "NVwyd2vWERs", "dur": 10519},
-    {"id": "KV2SV7yJ3ow", "dur": 9633},
-    {"id": "ZHiw3HXVPFE", "dur": 2718},
-    {"id": "1U6aw2jrv3E", "dur": 8375},
-    {"id": "2HE1IOAfYwY", "dur": 7201}
+    {
+      "id": "L59MxhvHxbI",
+      "dur": 16951
+    },
+    {
+      "id": "NVwyd2vWERs",
+      "dur": 10519
+    },
+    {
+      "id": "KV2SV7yJ3ow",
+      "dur": 9633
+    },
+    {
+      "id": "ZHiw3HXVPFE",
+      "dur": 2718
+    },
+    {
+      "id": "1U6aw2jrv3E",
+      "dur": 8375
+    },
+    {
+      "id": "2HE1IOAfYwY",
+      "dur": 7201
+    }
   ],
   "kulthum": [
-    {"id": "Ifqvh_OKq3A", "dur": 19625},
-    {"id": "JcrDpYQ1bZY", "dur": 13561},
-    {"id": "0U9DAYDA58s", "dur": 3061},
-    {"id": "wYqNvF4zBRw", "dur": 35785}
+    {
+      "id": "Ifqvh_OKq3A",
+      "dur": 19625
+    },
+    {
+      "id": "JcrDpYQ1bZY",
+      "dur": 13561
+    },
+    {
+      "id": "0U9DAYDA58s",
+      "dur": 3061
+    },
+    {
+      "id": "wYqNvF4zBRw",
+      "dur": 35785
+    }
+  ],
+  "fadel": [
+    {
+      "id": "IT6cZZyw_4E",
+      "dur": 10554
+    },
+    {
+      "id": "kdbhe7_w6yU",
+      "dur": 9005
+    },
+    {
+      "id": "k4xpvi6euCM",
+      "dur": 7755
+    },
+    {
+      "id": "sIxfbl_h5w0",
+      "dur": 4659
+    },
+    {
+      "id": "tS6mGeCcSv0",
+      "dur": 4178
+    },
+    {
+      "id": "l3RJHosH4lw",
+      "dur": 5289
+    },
+    {
+      "id": "I0kYNTi-xfg",
+      "dur": 4668
+    },
+    {
+      "id": "lCOx91b-KoI",
+      "dur": 3406
+    }
+  ],
+  "wael": [
+    {
+      "id": "GDsUVpNnkek",
+      "dur": 6225
+    },
+    {
+      "id": "j70bDTPpxrc",
+      "dur": 6515
+    },
+    {
+      "id": "-cA9luFV73U",
+      "dur": 6174
+    },
+    {
+      "id": "ERyTYZ93M_E",
+      "dur": 4777
+    },
+    {
+      "id": "4wIwhPKFGOc",
+      "dur": 2877
+    },
+    {
+      "id": "WIBVJ7v-ppg",
+      "dur": 5016
+    },
+    {
+      "id": "yKX98SaAimQ",
+      "dur": 3636
+    },
+    {
+      "id": "mhGLbpPinTQ",
+      "dur": 2499
+    },
+    {
+      "id": "_q7HD_7Mw2s",
+      "dur": 3129
+    }
+  ],
+  "specials": [
+    {
+      "note": "Party time: Fadel Shaker and Wael Kfoury swap every hour, Beirut time",
+      "from": "2026-11-28T12:55:00",
+      "to": "2026-11-28T19:00:00",
+      "blockHours": 1,
+      "order": [
+        "fadel",
+        "wael"
+      ]
+    }
   ]
 }
