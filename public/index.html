@@ -424,7 +424,7 @@ function playNow(){
 }
 audio.addEventListener("ended",()=>{ if(playing) playNow(); });
 function setPower(on){
-  playing=on;
+  playing=on; if(on){ try{ listenCtx(); }catch(e){} }
   if(on){ if(trackNow()){ yt.pause(); playNow(); } else { yt.play(); } }
   else { audio.pause(); yt.pause(); if(pendingReload) setTimeout(()=>location.reload(),400); }
   $("power").setAttribute("aria-pressed",String(playing)); $("power").textContent=playing?"Turn off":"Turn on";
@@ -473,8 +473,22 @@ const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
 let liveOn=false, livePeer=null, liveHost=null, liveAudio=null, peerLib=null;
 function liveSign(){ $("onair").classList.toggle("on",playing||liveOn); $("onair").classList.toggle("live",liveOn); $("onairTxt").textContent=liveOn?"Live · Osfour":(playing?"On air":"Off air"); }
 function loadPeer(){ if(peerLib) return peerLib; peerLib=new Promise((ok,no)=>{ if(window.Peer) return ok(); const sc=document.createElement("script"); sc.src="/vendor/peerjs.min.js"; sc.onload=()=>ok(); sc.onerror=no; document.head.appendChild(sc); }); return peerLib; }
-function duck(on){ duckK=on?0.15:1; yt.vol(volume); audio.volume=volume*duckK; }
+let _lc=null; function listenCtx(){ if(!_lc) _lc=new (window.AudioContext||window.webkitAudioContext)(); if(_lc.state==="suspended") _lc.resume(); return _lc; }
+let duckTarget=1, duckRaf=0, voiceMeter=null, lastVoice=0;
+function setDuck(k){ duckK=k; yt.vol(volume); audio.volume=Math.max(0,Math.min(1,volume*duckK)); }
+// while Osfour is live the music sits lower, and dips right down whenever the host is actually talking
+function duck(on,stream){ cancelAnimationFrame(duckRaf); if(voiceMeter){ try{ voiceMeter.src.disconnect(); }catch(e){} voiceMeter=null; }
+  if(!on){ setDuck(1); return; }
+  try{ const ctx=listenCtx(); const an=ctx.createAnalyser(); an.fftSize=1024; const src=ctx.createMediaStreamSource(stream); src.connect(an); voiceMeter={ctx,src,an,d:new Float32Array(an.fftSize)}; if(ctx.state==="suspended") ctx.resume(); }catch(e){}
+  let k=duckK;
+  const loop=()=>{ let talking=true;
+    if(voiceMeter){ voiceMeter.an.getFloatTimeDomainData(voiceMeter.d); let sum=0; for(const v of voiceMeter.d) sum+=v*v; const rms=Math.sqrt(sum/voiceMeter.d.length); if(rms>0.02) lastVoice=performance.now(); talking=performance.now()-lastVoice<1400; }
+    const target=talking?0.08:0.45; k+= (target-k)*(target<k?0.25:0.02);   // dip fast, come back up gently
+    if(Math.abs(k-duckK)>0.004) setDuck(k);
+    duckRaf=requestAnimationFrame(loop); };
+  loop(); }
 function liveStop(){ if(livePeer){ try{ livePeer.destroy(); }catch(e){} } livePeer=null; liveHost=null; if(liveAudio){ liveAudio.pause(); liveAudio.srcObject=null; } duck(false); }
+function hiFi(sdp){ return sdp.replace(/a=fmtp:(\d+) (.*useinbandfec=1.*)/g,(m,pt,rest)=>{ let r=rest.replace(/;?(stereo|sprop-stereo|maxaveragebitrate|maxplaybackrate)=[^;]*/g,""); return "a=fmtp:"+pt+" "+r+";stereo=1;sprop-stereo=1;maxaveragebitrate=128000;maxplaybackrate=48000"; }); }
 async function liveJoin(hostId){
   if(liveHost===hostId && livePeer && !livePeer.destroyed) return;
   liveStop(); liveHost=hostId;
@@ -483,7 +497,7 @@ async function liveJoin(hostId){
   liveAudio.play().catch(()=>{});   // unlock playback while we still have the listener's tap
   const p=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}}); livePeer=p;
   p.on("open",()=>{ const c=p.connect(hostId,{reliable:true}); c.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
-  p.on("call",call=>{ call.answer(); call.on("stream",st=>{ liveAudio.srcObject=st; liveAudio.volume=1; liveAudio.play().catch(()=>{}); duck(true); });
+  p.on("call",call=>{ call.answer(undefined,{sdpTransform:hiFi}); call.on("stream",st=>{ liveAudio.srcObject=st; liveAudio.volume=1; liveAudio.play().catch(()=>{}); duck(true,st); });
     call.on("close",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,3000); } }); });
   p.on("error",()=>{ if(livePeer===p){ liveStop(); setTimeout(liveCheck,5000); } });
 }
