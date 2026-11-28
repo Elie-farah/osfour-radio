@@ -195,6 +195,32 @@ footer .wrap{padding-block:18px;display:flex;justify-content:space-between;gap:1
 footer .ar{font-family:var(--arabic)}
 
 /* visitors' notebook */
+
+/* Osfour live: the host microphone and the live badge */
+.micBtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer;padding:0}
+.micBtn svg{width:18px;height:18px}
+.micBtn:hover{color:var(--cream);border-color:var(--amber)}
+.micBtn.on{background:#c23a30;border-color:#ff8a7e;color:#fff;box-shadow:0 0 0 4px rgba(226,70,59,.25)}
+.liveBadge{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;line-height:1.2;display:flex;align-items:center;gap:9px;
+  background:rgba(120,20,14,.82);color:#fff;border:1px solid rgba(255,140,120,.7);border-radius:999px;padding:7px 16px 7px 12px;font:700 .95rem "Alegreya Sans",sans-serif;letter-spacing:.12em;cursor:pointer;backdrop-filter:blur(4px);box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.liveBadge i{width:10px;height:10px;border-radius:50%;background:#ff4d3d;box-shadow:0 0 10px #ff4d3d;animation:blink 1.2s infinite}
+.liveBadge small{font-weight:500;letter-spacing:.02em;opacity:.85;font-size:.85rem;text-transform:none}
+.liveBadge[hidden]{display:none}
+.hostBox{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(10,6,3,.55);line-height:1.4;padding:16px}
+.hostBox[hidden]{display:none}
+.hostCard{width:min(380px,100%);background:#22170f;border:1px solid var(--line);border-radius:18px;padding:22px 20px;text-align:center;color:var(--cream);position:relative}
+.hostCard h3{margin:0 0 4px;font:700 1.2rem "Alegreya Sans",sans-serif}
+.hostCard p{margin:6px 0;color:var(--muted);font-size:.95rem}
+.hostCard input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#120c08;color:var(--cream);font:500 1rem "Alegreya Sans",sans-serif;margin-top:10px}
+.hostCard .x{position:absolute;top:8px;right:10px;background:none;border:0;color:var(--muted);font-size:1.5rem;cursor:pointer}
+.bigMic{width:132px;height:132px;border-radius:50%;margin:16px auto 10px;border:0;cursor:pointer;display:grid;place-items:center;color:var(--cream);font:700 1.05rem "Alegreya Sans",sans-serif;
+  background:radial-gradient(circle at 50% 40%,#3a2a1c,#1c130c);box-shadow:0 0 0 2px var(--line) inset,0 8px 30px rgba(0,0,0,.5)}
+.bigMic svg{width:42px;height:42px;display:block;margin:0 auto 4px}
+.bigMic.on{background:radial-gradient(circle at 50% 40%,#b7352c,#6e1812);box-shadow:0 0 0 2px rgba(255,120,100,.6) inset,0 0 0 calc(5px + var(--lvl,0)*22px) rgba(226,70,59,.22)}
+.hostRow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.hostRow button{background:transparent;border:1px solid var(--line);color:var(--cream);border-radius:999px;padding:7px 14px;font:500 .92rem "Alegreya Sans",sans-serif;cursor:pointer}
+.hostMeter{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:10px auto 0;max-width:220px}
+.hostMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f6b54a,#e2463b)}
 .book[hidden]{display:none}
 .hints{display:flex;gap:8px;flex-wrap:wrap}
 .hint.book-hint{cursor:pointer;border-color:rgba(255,255,255,.35)}
@@ -270,16 +296,39 @@ footer .ar{font-family:var(--arabic)}
 <header class="top">
   <div class="wrap">
     <div class="brand"><b>OSFOUR</b><span lang="ar">راديو عصفور</span><small>Radio Station · Lebanon</small></div>
-    <div class="status"><span id="clock">Beirut --:--</span><span class="pill" id="onair"><i></i><span id="onairTxt">Off air</span></span></div>
+    <div class="status"><button class="micBtn" id="micBtn" title="Osfour live microphone" aria-label="Osfour live microphone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button><span id="clock">Beirut --:--</span><span class="pill" id="onair"><i></i><span id="onairTxt">Off air</span></span></div>
   </div>
 </header>
 
 <section class="scene" aria-label="A Lebanese village café terrace at sunset with an old radio, overlooking the sea">
   <canvas id="sky"></canvas>
+  <button class="liveBadge" id="liveBadge" hidden><i></i><span>OSFOUR LIVE</span><small id="liveHint">tap to listen</small></button>
   <div class="scene-ui">
   </div>
 </section>
 
+
+<div class="hostBox" id="hostBox" hidden role="dialog" aria-modal="true" aria-labelledby="hostTitle">
+  <div class="hostCard">
+    <button class="x" id="hostX" aria-label="Close">×</button>
+    <div id="hostLogin">
+      <h3 id="hostTitle">Osfour microphone</h3>
+      <p>Only the host can go live. Enter the host password.</p>
+      <input id="hostPass" type="password" autocomplete="current-password" placeholder="Password">
+      <div class="hostRow"><button id="hostEnter">Continue</button></div>
+      <p id="hostMsg"></p>
+    </div>
+    <div id="hostDesk" hidden>
+      <h3>Talk live on Osfour</h3>
+      <p id="hostSub">Press the microphone to go on air. Everyone listening hears you, with the music softly behind you.</p>
+      <button class="bigMic" id="bigMic" aria-pressed="false"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg><span id="bigMicTxt">Go live</span></span></button>
+      <div id="hostStatus" style="font-weight:700">Off air</div>
+      <div class="hostMeter"><i id="hostLvl"></i></div>
+      <p id="hostCount"></p>
+      <div class="hostRow"><button id="hostMute" hidden aria-pressed="false">Mute my mic</button><button id="hostOut">Sign out on this device</button></div>
+    </div>
+  </div>
+</div>
 <div class="book" id="book" hidden role="dialog" aria-modal="true" aria-labelledby="bookTitle">
   <div class="page">
     <button class="x" id="bookClose" aria-label="Close the notebook">×</button>
@@ -470,8 +519,10 @@ const yt=(()=>{ let player=null, ready=false, want=false, cur=null;
            vol(v){ if(ready) player.setVolume(Math.round(v*duckK*100)); } };
 })();
 /* ---------- Osfour live: when the host goes live, everyone with the radio on hears the host's voice in real time ---------- */
+let hostLive=false;
 let liveOn=false, livePeer=null, liveHost=null, liveAudio=null, peerLib=null;
-function liveSign(){ $("onair").classList.toggle("on",playing||liveOn); $("onair").classList.toggle("live",liveOn); $("onairTxt").textContent=liveOn?"Live · Osfour":(playing?"On air":"Off air"); }
+function liveSign(){ const b=$("liveBadge"); b.hidden=!liveOn; $("liveHint").textContent= hostLive ? "you're on air" : (playing ? "listening" : "tap to listen");
+  $("onair").classList.toggle("on",playing||liveOn); $("onair").classList.toggle("live",liveOn); $("onairTxt").textContent=liveOn?"Live · Osfour":(playing?"On air":"Off air"); }
 function loadPeer(){ if(peerLib) return peerLib; peerLib=new Promise((ok,no)=>{ if(window.Peer) return ok(); const sc=document.createElement("script"); sc.src="/vendor/peerjs.min.js"; sc.onload=()=>ok(); sc.onerror=no; document.head.appendChild(sc); }); return peerLib; }
 let _lc=null; function listenCtx(){ if(!_lc) _lc=new (window.AudioContext||window.webkitAudioContext)(); if(_lc.state==="suspended") _lc.resume(); return _lc; }
 let duckTarget=1, duckRaf=0, voiceMeter=null, lastVoice=0;
@@ -503,9 +554,71 @@ async function liveJoin(hostId){
 }
 async function liveCheck(){ try{ const d=await fetch("/api/live",{cache:"no-store"}).then(r=>r.ok?r.json():{live:false});
     liveOn=!!d.live; liveSign();
-    if(liveOn && playing) liveJoin(d.peerId); else if(!liveOn && liveHost) liveStop();
+    if(liveOn && playing && !hostLive) liveJoin(d.peerId); else if((!liveOn || hostLive) && liveHost) liveStop();
   }catch(e){} }
 liveCheck(); setInterval(liveCheck,8000);
+
+/* ---------- the host microphone, right on the site (password protected) ---------- */
+(()=>{
+  let KEY=""; try{ KEY=localStorage.getItem("osfourHostKey")||""; }catch(e){}
+  let mic=null, out=null, peer=null, beat=null, calls=new Map(), hc=null, raf=0;
+  const H={"content-type":"application/json"};
+  async function check(k){ try{ const r=await fetch("/api/live",{method:"POST",headers:{...H,"x-host-key":k},body:JSON.stringify({check:true})}); return r.ok; }catch(e){ return false; } }
+  async function tell(on){ try{ await fetch("/api/live",{method:"POST",headers:{...H,"x-host-key":KEY},body:JSON.stringify(on?{live:true,peerId:peer.id}:{live:false})}); }catch(e){} }
+  function open(){ $("hostBox").hidden=false; const ok=!!KEY; $("hostLogin").hidden=ok; $("hostDesk").hidden=!ok; if(!ok) setTimeout(()=>$("hostPass").focus(),50); }
+  $("micBtn").onclick=open; $("hostX").onclick=()=>{ $("hostBox").hidden=true; };
+  $("hostBox").addEventListener("click",e=>{ if(e.target===$("hostBox")) $("hostBox").hidden=true; });
+  async function enter(){ const k=$("hostPass").value.trim(); if(!k) return; $("hostMsg").textContent="Checking…";
+    if(await check(k)){ KEY=k; try{ localStorage.setItem("osfourHostKey",k); localStorage.setItem("osfourHost",k); }catch(e){} $("hostPass").value=""; $("hostMsg").textContent=""; open(); }
+    else $("hostMsg").textContent="Wrong password, or too many tries. Wait a little and try again."; }
+  $("hostEnter").onclick=enter; $("hostPass").addEventListener("keydown",e=>{ if(e.key==="Enter") enter(); });
+  $("hostOut").onclick=async()=>{ if(hostLive) await stop(); KEY=""; try{ localStorage.removeItem("osfourHostKey"); localStorage.removeItem("osfourHost"); }catch(e){} open(); };
+  // a link with #key=... signs this device in once
+  try{ const h=new URLSearchParams(location.hash.slice(1)).get("key"); if(h){ history.replaceState(null,"",location.pathname+location.search); check(h).then(ok=>{ if(ok){ KEY=h; try{ localStorage.setItem("osfourHostKey",h); localStorage.setItem("osfourHost",h); }catch(e){} } }); } }catch(e){}
+
+  function studio(input){   // clean, warm, radio-style voice, sent in stereo
+    hc=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
+    const src=hc.createMediaStreamSource(input), f=(t,fr,q,g)=>{ const b=hc.createBiquadFilter(); b.type=t; b.frequency.value=fr; if(q) b.Q.value=q; if(g!==undefined) b.gain.value=g; return b; };
+    const chain=[f("highpass",85,0.7),f("peaking",300,1,-2.5),f("lowshelf",160,0,2),f("peaking",3200,0.9,3.5),f("highshelf",9000,0,2)];
+    const comp=hc.createDynamicsCompressor(); comp.threshold.value=-24; comp.knee.value=12; comp.ratio.value=3.5; comp.attack.value=0.004; comp.release.value=0.2;
+    const make=hc.createGain(); make.gain.value=1.6;
+    const lim=hc.createDynamicsCompressor(); lim.threshold.value=-3; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.001; lim.release.value=0.08;
+    const dst=hc.createMediaStreamDestination(); dst.channelCount=2; const m=hc.createChannelMerger(2);
+    let n=src; for(const c of chain){ n.connect(c); n=c; } n.connect(comp); comp.connect(make); make.connect(lim); lim.connect(m,0,0); lim.connect(m,0,1); m.connect(dst);
+    const an=hc.createAnalyser(); an.fftSize=512; lim.connect(an); const d=new Uint8Array(an.fftSize);
+    const loop=()=>{ an.getByteTimeDomainData(d); let mx=0; for(const v of d) mx=Math.max(mx,Math.abs(v-128)); const l=Math.min(1,mx/70); $("hostLvl").style.width=(l*100)+"%"; $("bigMic").style.setProperty("--lvl",l.toFixed(2)); raf=requestAnimationFrame(loop); }; loop();
+    if(hc.state==="suspended") hc.resume();
+    return dst.stream;
+  }
+  function count(){ const n=[...calls.values()].filter(c=>c.open).length; $("hostCount").textContent= hostLive ? (n===1?"1 person is listening live":n+" people are listening live") : ""; }
+  function ui(){ $("bigMic").classList.toggle("on",hostLive); $("bigMic").setAttribute("aria-pressed",String(hostLive)); $("bigMicTxt").textContent=hostLive?"End live":"Go live";
+    $("micBtn").classList.toggle("on",hostLive); $("hostStatus").textContent=hostLive?"● You're live":"Off air"; $("hostStatus").style.color=hostLive?"#ff8a7e":""; $("hostMute").hidden=!hostLive; count(); liveSign(); }
+  async function go(){
+    $("hostStatus").textContent="Starting your microphone…";
+    try{ mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false,sampleRate:48000}}); }
+    catch(e){ $("hostStatus").textContent="The microphone wasn't allowed. Allow it in the browser and try again."; return; }
+    out=studio(mic);
+    try{ await loadPeer(); }catch(e){ $("hostStatus").textContent="Couldn't start. Check the internet and try again."; return; }
+    peer=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}});
+    peer.on("open",async()=>{ hostLive=true; await tell(true); liveOn=true; beat=setInterval(()=>tell(true),15000); ui(); });
+    peer.on("connection",conn=>{ conn.on("open",()=>{ const call=peer.call(conn.peer,out,{sdpTransform:hiFi}); calls.set(conn.peer,call);
+        call.on("close",()=>{ calls.delete(conn.peer); count(); }); call.on("error",()=>{ calls.delete(conn.peer); count(); }); setTimeout(count,1500); });
+      conn.on("close",()=>{ const c=calls.get(conn.peer); if(c) c.close(); calls.delete(conn.peer); count(); }); });
+    peer.on("disconnected",()=>{ try{ peer.reconnect(); }catch(e){} });
+  }
+  async function stop(){
+    hostLive=false; clearInterval(beat); await tell(false); liveOn=false;
+    calls.forEach(c=>{ try{ c.close(); }catch(e){} }); calls.clear(); try{ peer&&peer.destroy(); }catch(e){} peer=null;
+    [mic,out].forEach(st=>st&&st.getTracks().forEach(t=>t.stop())); mic=out=null; cancelAnimationFrame(raf); $("hostLvl").style.width="0"; try{ hc&&hc.close(); }catch(e){} hc=null;
+    $("hostMute").setAttribute("aria-pressed","false"); $("hostMute").textContent="Mute my mic"; ui();
+  }
+  $("bigMic").onclick=()=>{ (hostLive||peer) ? stop() : go(); };
+  $("hostMute").onclick=()=>{ if(!mic) return; const on=$("hostMute").getAttribute("aria-pressed")!=="true"; mic.getAudioTracks().forEach(t=>t.enabled=!on);
+    $("hostMute").setAttribute("aria-pressed",String(on)); $("hostMute").textContent=on?"Unmute my mic":"Mute my mic"; $("hostStatus").textContent=on?"● Live, your mic is muted":"● You're live"; };
+  window.addEventListener("pagehide",()=>{ if(hostLive) fetch("/api/live",{method:"POST",keepalive:true,headers:{...H,"x-host-key":KEY},body:JSON.stringify({live:false})}); });
+})();
+// the live badge turns the radio on
+$("liveBadge").onclick=()=>{ if(!playing && !hostLive) setPower(true); };
 // when the site is updated, open pages pick up the new version by themselves (only while the radio is off, so music is never cut)
 (()=>{ let base=null; async function sig(){ try{ const h=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()); let x=0; for(let i=0;i<h.length;i++) x=(x*31+h.charCodeAt(i))|0; return x; }catch(e){ return null; } }
   sig().then(v=>base=v);
