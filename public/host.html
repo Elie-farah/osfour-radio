@@ -82,21 +82,43 @@ $("keySave").onclick=async()=>{ const k=$("keyIn").value.trim(); $("keyMsg").tex
   if(await checkKey(k)){ KEY=k; try{ localStorage.setItem("osfourHostKey",k); }catch(e){} $("keyCard").hidden=true; $("hostCard").hidden=false; }
   else $("keyMsg").textContent="That key didn't work."; };
 
-let peer=null, stream=null, beat=null, calls=new Map(), live=false, ac=null, raf=0;
+let mic=null, peer=null, stream=null, beat=null, calls=new Map(), live=false, ac=null, raf=0;
 async function tell(on){ try{ await fetch("/api/live",{method:"POST",headers:{"content-type":"application/json","x-host-key":KEY},body:JSON.stringify(on?{live:true,peerId:peer.id}:{live:false})}); }catch(e){} }
 function setCount(){ const n=[...calls.values()].filter(c=>c.open).length; $("count").textContent= live ? (n===1?"1 person is listening live":n+" people are listening live") : ""; }
 
+// the studio chain: cut rumble, add clarity and warmth, even out the level, then send it in stereo
+function studio(input){
+  ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
+  const src=ac.createMediaStreamSource(input);
+  const hp=ac.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=85; hp.Q.value=0.7;
+  const mud=ac.createBiquadFilter(); mud.type="peaking"; mud.frequency.value=300; mud.Q.value=1; mud.gain.value=-2.5;
+  const warm=ac.createBiquadFilter(); warm.type="lowshelf"; warm.frequency.value=160; warm.gain.value=2;
+  const pres=ac.createBiquadFilter(); pres.type="peaking"; pres.frequency.value=3200; pres.Q.value=0.9; pres.gain.value=3.5;
+  const air=ac.createBiquadFilter(); air.type="highshelf"; air.frequency.value=9000; air.gain.value=2;
+  const comp=ac.createDynamicsCompressor(); comp.threshold.value=-24; comp.knee.value=12; comp.ratio.value=3.5; comp.attack.value=0.004; comp.release.value=0.2;
+  const make=ac.createGain(); make.gain.value=1.6;
+  const lim=ac.createDynamicsCompressor(); lim.threshold.value=-3; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.001; lim.release.value=0.08;
+  const out=ac.createMediaStreamDestination(); out.channelCount=2; out.channelCountMode="explicit"; out.channelInterpretation="speakers";
+  const merge=ac.createChannelMerger(2);
+  src.connect(hp); hp.connect(mud); mud.connect(warm); warm.connect(pres); pres.connect(air); air.connect(comp); comp.connect(make); make.connect(lim);
+  lim.connect(merge,0,0); lim.connect(merge,0,1); merge.connect(out);
+  if(ac.state==="suspended") ac.resume();
+  return out.stream;
+}
+// ask for high-quality stereo Opus
+function hiFi(sdp){ return sdp.replace(/a=fmtp:(\d+) (.*useinbandfec=1.*)/g,(m,pt,rest)=>{ let r=rest.replace(/;?(stereo|sprop-stereo|maxaveragebitrate|cbr|maxplaybackrate)=[^;]*/g,""); return "a=fmtp:"+pt+" "+r+";stereo=1;sprop-stereo=1;maxaveragebitrate=128000;maxplaybackrate=48000"; }); }
 async function goLive(){
   $("status").textContent="Starting your microphone…";
-  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
+  try{ mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false,sampleRate:48000}}); }
   catch(e){ $("status").textContent="The microphone wasn't allowed. Allow it in the browser and try again."; return; }
+  stream=studio(mic);   // clean, warm, radio-style voice in stereo
   meter();
   peer=new Peer({config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]}});
   peer.on("open",async()=>{ await tell(true); live=true; beat=setInterval(()=>tell(true),15000);
     $("mic").classList.add("live"); $("mic").setAttribute("aria-pressed","true"); $("micTxt").textContent="End live";
     $("status").textContent="● You're live"; $("status").className="status on"; $("liveCtl").hidden=false; setCount(); });
   // each listener says hello; we answer by sending them the microphone
-  peer.on("connection",conn=>{ conn.on("open",()=>{ const call=peer.call(conn.peer,stream); calls.set(conn.peer,call);
+  peer.on("connection",conn=>{ conn.on("open",()=>{ const call=peer.call(conn.peer,stream,{sdpTransform:hiFi}); calls.set(conn.peer,call);
       call.on("close",()=>{ calls.delete(conn.peer); setCount(); }); call.on("error",()=>{ calls.delete(conn.peer); setCount(); });
       setTimeout(setCount,1500); });
     conn.on("close",()=>{ const c=calls.get(conn.peer); if(c) c.close(); calls.delete(conn.peer); setCount(); }); });
@@ -107,16 +129,16 @@ async function endLive(){
   live=false; clearInterval(beat); await tell(false);
   calls.forEach(c=>{ try{ c.close(); }catch(e){} }); calls.clear();
   try{ peer&&peer.destroy(); }catch(e){} peer=null;
-  stream&&stream.getTracks().forEach(t=>t.stop()); stream=null; cancelAnimationFrame(raf); $("lvl").style.width="0";
+  stream&&stream.getTracks().forEach(t=>t.stop()); stream=null; mic&&mic.getTracks().forEach(t=>t.stop()); mic=null; cancelAnimationFrame(raf); $("lvl").style.width="0";
   try{ ac&&ac.close(); }catch(e){} ac=null;
   $("mic").classList.remove("live"); $("mic").setAttribute("aria-pressed","false"); $("micTxt").textContent="Go live";
   $("status").textContent="Off air"; $("status").className="status"; $("liveCtl").hidden=true; $("mute").setAttribute("aria-pressed","false"); $("mute").textContent="Mute my mic"; setCount();
 }
-function meter(){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); const src=ac.createMediaStreamSource(stream), an=ac.createAnalyser(); an.fftSize=512; src.connect(an);
+function meter(){ try{ const src=ac.createMediaStreamSource(stream), an=ac.createAnalyser(); an.fftSize=512; src.connect(an);
   const d=new Uint8Array(an.fftSize); const loop=()=>{ an.getByteTimeDomainData(d); let m=0; for(const v of d) m=Math.max(m,Math.abs(v-128)); const l=Math.min(1,m/70);
     $("lvl").style.width=(l*100)+"%"; $("mic").style.setProperty("--lvl",l.toFixed(2)); raf=requestAnimationFrame(loop); }; loop(); }catch(e){} }
 $("mic").onclick=()=>{ live||peer ? endLive() : goLive(); };
-$("mute").onclick=()=>{ if(!stream) return; const on=$("mute").getAttribute("aria-pressed")!=="true"; stream.getAudioTracks().forEach(t=>t.enabled=!on);
+$("mute").onclick=()=>{ if(!mic) return; const on=$("mute").getAttribute("aria-pressed")!=="true"; mic.getAudioTracks().forEach(t=>t.enabled=!on);
   $("mute").setAttribute("aria-pressed",String(on)); $("mute").textContent=on?"Unmute my mic":"Mute my mic"; $("status").textContent=on?"● Live, your mic is muted":"● You're live"; };
 window.addEventListener("pagehide",()=>{ if(live){ navigator.sendBeacon && fetch("/api/live",{method:"POST",keepalive:true,headers:{"content-type":"application/json","x-host-key":KEY},body:JSON.stringify({live:false})}); } });
 start();
